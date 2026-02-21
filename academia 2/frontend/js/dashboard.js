@@ -281,15 +281,15 @@ async function showActiveSession(sessionId) {
 // Update QR code with new token
 async function updateQRCode(sessionId) {
     try {
-        // Get current token from backend
-        const tokenRes = await fetch(`${API}/attendance/sessions/${sessionId}/token`, {
+        // Get current QR data from backend (points to frontend page)
+        const tokenRes = await fetch(`${API}/attendance/sessions/${sessionId}/qr`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
         const tokenData = await tokenRes.json();
         
         if (tokenRes.ok) {
-            // Generate QR code using external API
+            // Generate QR code using external API - points to attendance-scan-result.html
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tokenData.qrData)}`;
             document.getElementById("qrCodeImage").src = qrImageUrl;
             

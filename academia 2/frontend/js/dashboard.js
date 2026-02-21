@@ -1,4 +1,5 @@
-const API = "http://localhost:5000/api";
+const API = "https://academia-2-xgdr.onrender.com/api";
+
 const user = JSON.parse(localStorage.getItem("user"));
 const token = localStorage.getItem("token");
 

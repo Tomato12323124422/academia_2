@@ -1,4 +1,5 @@
-const API = "http://localhost:5000/api";
+const API = "https://academia-2-xgdr.onrender.com/api";
+
 const token = localStorage.getItem("token");
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -64,7 +65,8 @@ async function onScanSuccess(decodedText, decodedResult) {
     }
     
     // Parse QR code data
-    // New format: http://localhost:5000/attendance?session=SESSION_ID&token=TOKEN
+    // New format: https://academia-2-xgdr.onrender.com/attendance?session=SESSION_ID&token=TOKEN
+
     let sessionId = null;
     let qrToken = null;
     

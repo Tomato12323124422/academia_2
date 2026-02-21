@@ -1,4 +1,5 @@
-const API = "http://localhost:5000/api/auth";
+const API = "https://academia-2-xgdr.onrender.com/api/auth";
+
 
 /* ================= REGISTER ================= */
 const registerForm = document.getElementById("registerForm");
@@ -80,4 +81,3 @@ if (loginForm) {
         }
     });
 }
-

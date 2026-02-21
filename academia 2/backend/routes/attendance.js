@@ -503,11 +503,14 @@ router.get('/scan', async (req, res) => {
             });
         }
         
+        // Convert sessionId to integer for database query
+        const sessionIdInt = parseInt(sessionId, 10);
+        
         // Check if session exists and is active
         const { data: session, error: sessionError } = await supabase
             .from('sessions')
             .select('*, courses(title)')
-            .eq('id', sessionId)
+            .eq('id', sessionIdInt)
             .eq('status', 'active');
         
         if (sessionError || !session || session.length === 0) {
@@ -517,7 +520,7 @@ router.get('/scan', async (req, res) => {
         // Return session info and token for attendance marking
         res.json({
             valid: true,
-            sessionId: sessionId,
+            sessionId: sessionIdInt,
             token: token,
             course: session[0].courses?.title || 'Unknown Course',
             message: 'Ready to mark attendance'

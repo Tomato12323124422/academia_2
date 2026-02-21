@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ACADEMIA LMS Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+
+        <div class="logo-box">
+            <img src="assets/logo.png" class="logo">
+            <h3>ACADEMIA LMS</h3>
+        </div>
+
+        <ul id="menu">
+            <!-- Filled dynamically by JS -->
+        </ul>
+
+    </aside>
+
+
+    <!-- ===== MAIN AREA ===== -->
+    <main class="main">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <h2 id="welcome">Dashboard</h2>
+            <button onclick="logout()" class="logout">Logout</button>
+        </header>
+
+
+        <!-- DASHBOARD CONTENT -->
+        <section class="cards">
+
+            <div class="card">
+                <h3>Courses</h3>
+                <p id="courseCount">0</p>
+            </div>
+
+            <div class="card">
+                <h3>XP Points</h3>
+                <p id="xp">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Badges</h3>
+                <p id="badges">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Attendance</h3>
+                <p id="attendance">0%</p>
+            </div>
+
+        </section>
+
+
+        <!-- LIVE CLASSES AREA -->
+        <section class="panel">
+            <h3>Live Virtual Classes</h3>
+            <div id="zoomClasses"></div>
+        </section>
+
+
+        <!-- QR ATTENDANCE - STUDENT -->
+        <section class="panel" id="studentAttendancePanel" style="display: none;">
+            <h3>Scan QR for Attendance</h3>
+            <p>Use your phone to scan the teacher's QR code</p>
+            <button class="primary-btn" onclick="openAttendanceScanner()">Open Scanner</button>
+        </section>
+
+        <!-- TEACHER SESSION MANAGEMENT -->
+        <section class="panel" id="teacherSessionPanel" style="display: none;">
+            <h3>Class Session</h3>
+            <div id="activeSessionInfo" style="display: none;">
+                <p><strong>Session Active</strong></p>
+                <p>Students can scan the QR code below to mark attendance</p>
+                <div id="qrCodeDisplay" style="margin: 20px 0; text-align: center;">
+                    <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 250px; border: 2px solid #ddd; border-radius: 8px;">
+                </div>
+                <div id="attendanceStats" style="margin: 15px 0;">
+                    <p>Students Present: <span id="presentCount">0</span></p>
+                </div>
+                <button class="secondary-btn" onclick="refreshAttendance()">Refresh Attendance</button>
+                <button class="secondary-btn" onclick="endSession()" style="background: #dc3545; color: white; margin-left: 10px;">End Session</button>
+            </div>
+            <div id="noActiveSession">
+                <p>No active class session. Select a course and click "Start Class" to begin.</p>
+            </div>
+        </section>
+
+        <!-- SESSION ATTENDANCE LIST -->
+        <section class="panel" id="attendanceListPanel" style="display: none;">
+            <h3>Attendance List</h3>
+            <div id="attendanceList" style="max-height: 300px; overflow-y: auto;">
+                <p>No attendance records yet.</p>
+            </div>
+        </section>
+
+
+        <!-- CREATE COURSE PANEL (Teacher Only) -->
+        <section class="panel" id="createCoursePanel" style="display: none;">
+            <h3>Create New Course</h3>
+            <form id="createCourseForm">
+                <div class="form-group">
+                    <label>Course Name</label>
+                    <input type="text" id="courseTitle" placeholder="Enter course name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="courseDescription" placeholder="Enter course description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="courseCategory">
+                        <option value="General">General</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="Programming">Programming</option>
+                        <option value="Language">Language</option>
+                        <option value="Business">Business</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duration</label>
+                    <input type="text" id="courseDuration" placeholder="e.g., 8 weeks, 3 months">
+                </div>
+                <button type="submit" class="primary-btn">Create Course</button>
+                <button type="button" class="secondary-btn" onclick="hideCreateCourseForm()">Cancel</button>
+            </form>
+        </section>
+
+        <!-- MY COURSES LIST (Teacher Only) -->
+        <section class="panel" id="myCoursesPanel" style="display: none;">
+            <h3>My Courses</h3>
+            <div id="myCoursesList" class="courses-grid">
+                <!-- Courses will be loaded here dynamically -->
+            </div>
+        </section>
+
+        <!-- COURSE SESSIONS HISTORY -->
+        <section class="panel" id="courseSessionsPanel" style="display: none;">
+            <h3>Course Sessions</h3>
+            <div id="sessionsList">
+                <p>Select a course to view sessions.</p>
+            </div>
+        </section>
+
+
+    </main>
+
+
+</div>
+
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+/* ===== GLOBAL RESET ===== */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0b1d3a,#1f3c6d);
+}
+
+/* ===== AUTH CARD ===== */
+.auth-container{
+    width:420px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(20px);
+    border-radius:14px;
+    padding:35px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.3);
+    text-align:center;
+}
+
+/* ===== LOGO ===== */
+.logo{
+    width:110px;
+    margin-bottom:15px;
+}
+
+/* ===== TITLE ===== */
+.auth-container h2{
+    color:#fff;
+    margin-bottom:20px;
+}
+
+/* ===== INPUTS ===== */
+.auth-container input,
+.auth-container select{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    border-radius:8px;
+    outline:none;
+    background:#f1f3f6;
+}
+
+/* ===== BUTTON ===== */
+.auth-container button{
+    width:100%;
+    padding:12px;
+    margin-top:12px;
+    border:none;
+    border-radius:8px;
+    background:#4da3ff;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.auth-container button:hover{
+    background:#2c7be5;
+}
+
+/* ===== LINKS ===== */
+.auth-container p{
+    margin-top:12px;
+    color:#ccc;
+    font-size:14px;
+}
+
+.auth-container a{
+    color:#4da3ff;
+    text-decoration:none;
+    font-weight:bold;
+}

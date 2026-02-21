@@ -1,0 +1,456 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+Project Name: ACADEMIA LMS
+1. Product Overview
+1.1 Purpose
+
+ACADEMIA LMS is a web-based Learning Management System designed to facilitate course delivery, assessment management, attendance tracking, and academic monitoring. The system supports live virtual classes via Zoom, QR-code-based attendance, and gamification to improve student engagement.
+
+1.2 Problem Statement
+
+Many institutions require a lightweight LMS that is easy to deploy, simple to use, and capable of running on free hosting platforms without requiring payment details.
+
+1.3 Objectives
+
+Deliver structured online learning.
+
+Enable assignment submission and grading.
+
+Allow guardians to monitor performance.
+
+Support live virtual classes.
+
+Track attendance using QR codes.
+
+Increase engagement through gamification.
+
+Deploy fully on free platforms.
+
+2. Target Users
+🎓 Students
+
+Capabilities:
+
+Register/login.
+
+Enroll in courses.
+
+Access materials.
+
+Submit assignments.
+
+Take quizzes.
+
+Join live Zoom classes.
+
+Scan QR codes for attendance.
+
+Earn points, badges, and rewards.
+
+👨‍🏫 Instructors
+
+Capabilities:
+
+Create/manage courses.
+
+Upload materials and assignments.
+
+Create quizzes.
+
+Schedule live classes.
+
+Generate attendance QR codes.
+
+Monitor student progress and engagement.
+
+👨‍👩‍👧 Guardians / Parents
+
+Capabilities:
+
+View grades, attendance, and progress.
+
+Monitor upcoming classes.
+
+Read-only access.
+
+Restrictions:
+
+Cannot modify academic content.
+
+🛠 Admin
+
+Capabilities:
+
+Manage users and roles.
+
+Link guardians to students.
+
+Monitor system analytics.
+
+Moderate content.
+
+3. Product Scope (MVP)
+Core Modules
+
+Authentication & Role-Based Access Control
+
+Course Management
+
+Assignment & Quiz System
+
+Live Virtual Classes (Zoom Links)
+
+QR Attendance System
+
+Gamification System
+
+Dashboards for each role
+
+4. Functional Requirements
+4.1 Authentication
+
+Secure registration/login.
+
+Role-based access control.
+
+Password hashing.
+
+4.2 Course Management
+
+Instructor creates courses with materials.
+
+Students enroll in courses.
+
+Content accessed via HTML frontend.
+
+4.3 Assignment Module
+
+Upload assignments.
+
+Student submissions.
+
+Instructor grading.
+
+Submission timestamps.
+
+4.4 Quiz Module
+
+Multiple-choice quizzes.
+
+Automatic scoring.
+
+Results stored per student.
+
+4.5 Guardian Management
+
+Admin links guardians to students.
+
+Guardian dashboard shows:
+
+Grades
+
+Attendance
+
+Course progress
+
+Read-only access.
+
+4.6 Live Virtual Classes (Zoom)
+
+Instructor:
+
+Create session with Zoom link.
+
+Edit or cancel session.
+
+Student:
+
+View upcoming sessions.
+
+Join via link.
+
+Guardian:
+
+View schedule.
+
+4.7 QR Code Attendance
+
+Instructor:
+
+Generate time-limited QR code.
+
+View attendance list.
+
+Student:
+
+Scan QR code to sign attendance.
+
+Guardian:
+
+View attendance history.
+
+System Rules:
+
+Token expiration.
+
+Prevent duplicate scans.
+
+Validate course enrollment.
+
+4.8 Gamification System
+Purpose
+
+Increase engagement, motivation, and participation.
+
+Student Rewards
+
+Students earn points for:
+
+Completing assignments.
+
+Attending live classes.
+
+Scanning QR attendance.
+
+Passing quizzes.
+
+Gamification Features
+
+Experience Points (XP)
+
+Badges
+
+Progress Levels
+
+Leaderboard per course
+
+Instructor Capabilities
+
+View leaderboard.
+
+Award bonus points (optional).
+
+Guardian View
+
+See student achievements and progress level.
+
+5. Non-Functional Requirements
+Performance
+
+Page load under 3 seconds.
+
+Support minimum 50 concurrent users.
+
+Security
+
+Protected API routes.
+
+Input validation.
+
+Secure tokens for attendance.
+
+Usability
+
+Mobile-friendly HTML pages.
+
+Simple navigation.
+
+6. Technical Architecture
+🎨 Frontend
+
+Technology:
+
+HTML5
+
+CSS3
+
+Vanilla JavaScript
+
+Structure
+/public
+   index.html
+   login.html
+   register.html
+   dashboard-student.html
+   dashboard-instructor.html
+   dashboard-guardian.html
+   courses.html
+   assignments.html
+   live-classes.html
+   attendance-scan.html
+   leaderboard.html
+
+/css
+   styles.css
+
+/js
+   auth.js
+   dashboard.js
+   courses.js
+   liveClasses.js
+   attendance.js
+   gamification.js
+
+⚙ Backend
+
+Node.js
+
+Express REST API
+
+🗄 Database
+
+PostgreSQL (Supabase Free Tier)
+
+🔗 System Architecture
+
+User Browser
+⬇
+Firebase Hosting (HTML Frontend)
+⬇
+Render Backend API
+⬇
+Supabase PostgreSQL Database
+
+7. Database Design Overview
+Core Tables
+
+Users
+
+Courses
+
+Enrollments
+
+Assignments
+
+Submissions
+
+Quizzes
+
+Grades
+
+LiveClasses
+
+AttendanceSessions
+
+AttendanceRecords
+
+Gamification Tables
+Points
+id
+student_id
+points
+source
+created_at
+
+Badges
+id
+name
+description
+icon
+
+StudentBadges
+id
+student_id
+badge_id
+awarded_at
+
+Guardian Relationship
+
+GuardianStudent:
+
+id
+guardian_id
+student_id
+
+8. Dashboard Requirements
+Student Dashboard
+
+Courses overview
+
+Assignment deadlines
+
+Attendance history
+
+Upcoming live classes
+
+Points and badges
+
+Leaderboard ranking
+
+Instructor Dashboard
+
+Course management
+
+Attendance analytics
+
+Live class scheduling
+
+Student leaderboard
+
+Guardian Dashboard
+
+Grades
+
+Attendance summary
+
+Student achievements
+
+9. Deployment Strategy (Free Hosting)
+Frontend
+
+Firebase Hosting (Primary)
+
+Backend
+
+Render Free Web Service
+
+Database
+
+Supabase PostgreSQL
+
+Deployment Flow
+
+GitHub
+⬇
+Firebase (Frontend)
+⬇
+Render API
+⬇
+Supabase DB
+
+Frontend must call backend using full URLs:
+
+https://your-app.onrender.com/api/...
+
+10. Success Metrics
+
+All roles authenticate successfully.
+
+Courses and assignments function correctly.
+
+Students join Zoom classes via LMS.
+
+QR attendance recorded.
+
+Gamification points update automatically.
+
+LMS deploys on free platforms.
+
+11. Risks & Constraints
+
+Free hosting cold starts may slow first request.
+
+Limited storage and RAM.
+
+External hosting required for large videos.
+
+12. Future Enhancements
+
+AI learning assistant.
+
+Messaging/chat system.
+
+Notifications and reminders.
+
+Certificate generation.
+
+Mobile app version.

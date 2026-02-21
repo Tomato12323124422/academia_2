@@ -2,8 +2,10 @@ services:
   - type: web
     name: academia-lms
     runtime: node
+    rootDir: academia 2
     buildCommand: npm install
     startCommand: npm start
+
     envVars:
       - key: NODE_ENV
         value: production

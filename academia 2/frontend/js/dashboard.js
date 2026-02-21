@@ -191,8 +191,9 @@ let currentSessionId = null;
 let qrRefreshInterval = null;
 let attendanceRefreshInterval = null;
 
-// Token rotation interval: 20 seconds
-const TOKEN_INTERVAL = 20000;
+// Token rotation interval: 40 seconds
+const TOKEN_INTERVAL = 40000;
+
 
 // Start a new class session
 async function startClass(courseId) {
@@ -266,7 +267,8 @@ async function showActiveSession(sessionId) {
     // Load initial QR code
     await updateQRCode(sessionId);
     
-    // Set up auto-refresh for QR code every 20 seconds
+    // Set up auto-refresh for QR code every 40 seconds
+
     qrRefreshInterval = setInterval(() => updateQRCode(sessionId), TOKEN_INTERVAL);
     
     // Load attendance immediately

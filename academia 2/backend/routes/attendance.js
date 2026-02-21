@@ -6,8 +6,9 @@ const os = require('os');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
-// Token rotation interval: 20 seconds (in milliseconds)
-const TOKEN_INTERVAL = 20000;
+// Token rotation interval: 40 seconds (in milliseconds)
+const TOKEN_INTERVAL = 40000;
+
 
 // Get server IP address for QR codes
 function getServerIP() {

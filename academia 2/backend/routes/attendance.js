@@ -24,9 +24,9 @@ function getServerIP() {
     return 'localhost';
 }
 
-const SERVER_IP = getServerIP();
-// Allow custom public URL via environment variable (for ngrok, etc.)
-const SERVER_URL = process.env.PUBLIC_URL || `http://${SERVER_IP}:5000`;
+// Use Render URL for production, fallback to local for development
+const SERVER_URL = process.env.PUBLIC_URL || 'https://academia-2-xgdr.onrender.com';
+
 
 
 

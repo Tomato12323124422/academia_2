@@ -229,26 +229,11 @@
         console.log("No user logged in");
     }
     
-    // Debug logging function
-    function debug(msg) {
-        console.log(msg);
-        const debugDiv = document.getElementById('debugMessages');
-        if (debugDiv) {
-            debugDiv.innerHTML += '<br>' + msg;
-        }
-    }
-    
     // Initialize
     init();
     
     async function init() {
-        debug("Initializing...");
-        debug("Session: " + sessionId);
-        debug("Token: " + token);
-        debug("API: " + API);
-        
         if (!sessionId || !token) {
-            debug("ERROR: Missing session or token");
             showError("Invalid QR code. Missing session or token.");
             return;
         }
@@ -256,16 +241,11 @@
         try {
             // Verify the scan URL
             const scanUrl = `${API}/attendance/scan?session=${sessionId}&token=${token}`;
-            debug("Fetching: " + scanUrl);
             
             const res = await fetch(scanUrl);
-            debug("Response status: " + res.status);
-            
             const data = await res.json();
-            debug("Response data: " + JSON.stringify(data));
             
             if (!res.ok) {
-                debug("Request failed with status: " + res.status);
                 if (data.expired) {
                     showExpired();
                 } else {
@@ -280,16 +260,13 @@
             
             // If user is logged in as student, mark attendance automatically
             if (user && user.role === 'student') {
-                debug("User logged in as student, marking attendance...");
                 await markAttendance();
             } else {
-                debug("No user logged in, showing login form");
                 // Show login/manual entry form
                 showLogin();
             }
             
         } catch (err) {
-            debug("ERROR: " + err.message);
             showError("Network error: " + err.message + ". Please check your connection.");
         }
     }

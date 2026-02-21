@@ -148,6 +148,12 @@
 <body>
 
 <div class="container">
+    <!-- Debug Output -->
+    <div id="debugOutput" style="background: #f0f0f0; padding: 10px; margin-bottom: 20px; border-radius: 8px; font-family: monospace; font-size: 12px; text-align: left; max-height: 200px; overflow-y: auto;">
+        <strong>Debug Log:</strong>
+        <div id="debugMessages">Starting...</div>
+    </div>
+    
     <!-- Loading State -->
     <div id="loadingState">
         <div class="icon loading">⏳</div>
@@ -155,6 +161,7 @@
         <div class="spinner"></div>
         <p class="message">Please wait while we verify your attendance session.</p>
     </div>
+
     
     <!-- Success State -->
     <div id="successState" class="hidden">
@@ -228,13 +235,26 @@
         console.log("No user logged in");
     }
     
+    // Debug logging function
+    function debug(msg) {
+        console.log(msg);
+        const debugDiv = document.getElementById('debugMessages');
+        if (debugDiv) {
+            debugDiv.innerHTML += '<br>' + msg;
+        }
+    }
+    
     // Initialize
     init();
     
     async function init() {
-        console.log("Initializing with session:", sessionId, "token:", token);
+        debug("Initializing...");
+        debug("Session: " + sessionId);
+        debug("Token: " + token);
+        debug("API: " + API);
         
         if (!sessionId || !token) {
+            debug("ERROR: Missing session or token");
             showError("Invalid QR code. Missing session or token.");
             return;
         }
@@ -242,15 +262,16 @@
         try {
             // Verify the scan URL
             const scanUrl = `${API}/attendance/scan?session=${sessionId}&token=${token}`;
-            console.log("Fetching:", scanUrl);
+            debug("Fetching: " + scanUrl);
             
             const res = await fetch(scanUrl);
-            console.log("Response status:", res.status);
+            debug("Response status: " + res.status);
             
             const data = await res.json();
-            console.log("Response data:", data);
+            debug("Response data: " + JSON.stringify(data));
             
             if (!res.ok) {
+                debug("Request failed with status: " + res.status);
                 if (data.expired) {
                     showExpired();
                 } else {
@@ -265,17 +286,20 @@
             
             // If user is logged in as student, mark attendance automatically
             if (user && user.role === 'student') {
+                debug("User logged in as student, marking attendance...");
                 await markAttendance();
             } else {
+                debug("No user logged in, showing login form");
                 // Show login/manual entry form
                 showLogin();
             }
             
         } catch (err) {
-            console.error("Error in init:", err);
+            debug("ERROR: " + err.message);
             showError("Network error: " + err.message + ". Please check your connection.");
         }
     }
+
 
     
     async function markAttendance() {

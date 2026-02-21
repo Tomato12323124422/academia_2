@@ -2,9 +2,9 @@ services:
   - type: web
     name: academia-lms
     runtime: node
-    rootDir: academia 2
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: cd "academia 2" && npm install
+    startCommand: cd "academia 2" && npm start
+
 
     envVars:
       - key: NODE_ENV

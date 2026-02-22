@@ -1,4 +1,9 @@
-const API = "https://academia-2-xgdr.onrender.com/api";
+// Use local server for development, or production URL
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:5000' 
+    : 'https://academia-2-xgdr.onrender.com';
+
+const API = `${API_BASE}/api`;
 
 const token = localStorage.getItem("token");
 const user = JSON.parse(localStorage.getItem("user"));

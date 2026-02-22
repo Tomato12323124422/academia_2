@@ -103,15 +103,20 @@ router.post('/sessions', authMiddleware, async (req, res) => {
             return res.status(400).json({ message: 'There is already an active session for this course' });
         }
 
+        // Get local time for start_time
+        const now = new Date();
+        
         const { data, error } = await supabase
             .from('sessions')
             .insert([{
                 course_id,
                 teacher_id: req.user.id,
-                date: new Date().toISOString(),
+                date: now.toISOString(),
+                start_time: now.toISOString(),
+                end_time: null,
                 zoom_link: zoom_link || '',
                 status: 'active',
-                created_at: new Date().toISOString()
+                created_at: now.toISOString()
             }])
             .select();
 
@@ -121,7 +126,8 @@ router.post('/sessions', authMiddleware, async (req, res) => {
 
         res.status(201).json({ 
             message: 'Session created successfully', 
-            session: data[0] 
+            session: data[0],
+            startTime: now.toISOString()
         });
 
     } catch (err) {
@@ -553,10 +559,16 @@ router.patch('/sessions/:id/end', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to end this session' });
         }
 
-        // Update session status to ended
+        // Get local time for end_time
+        const now = new Date();
+
+        // Update session status to ended with end_time
         const { data, error } = await supabase
             .from('sessions')
-            .update({ status: 'ended' })
+            .update({ 
+                status: 'ended',
+                end_time: now.toISOString()
+            })
             .eq('id', sessionId)
             .select();
 
@@ -566,7 +578,8 @@ router.patch('/sessions/:id/end', authMiddleware, async (req, res) => {
 
         res.json({ 
             message: 'Session ended successfully',
-            session: data[0]
+            session: data[0],
+            endTime: now.toISOString()
         });
 
     } catch (err) {

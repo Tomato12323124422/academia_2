@@ -31,8 +31,9 @@ if(user.role === "teacher"){
         <li onclick="showMyCourses()">My Courses</li>
         <li>Live Classes</li>
         <li onclick="showTeacherSessionPanel()">Attendance QR</li>
-        <li>Students</li>
+        <li onclick="window.location.href='students.html'">Students</li>
     `;
+
     // Show teacher session panel
     document.getElementById("teacherSessionPanel").style.display = "block";
     document.getElementById("attendanceListPanel").style.display = "block";

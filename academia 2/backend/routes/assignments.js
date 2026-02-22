@@ -103,7 +103,7 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
 });
 
 // GET ALL ASSIGNMENTS FOR STUDENT (enrolled courses)
-router.get('/student', authMiddleware, async (req, res) => {
+router.get('/my-assignments', authMiddleware, async (req, res) => {
     try {
         if (req.user.role !== 'student') {
             return res.status(403).json({ message: 'Only students can access this' });

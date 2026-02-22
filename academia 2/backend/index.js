@@ -46,17 +46,39 @@ app.get('/', (req, res) => {
 
 // Serve attendance-scan-result.html directly
 app.get('/attendance-scan-result.html', (req, res) => {
+    console.log('Serving attendance-scan-result.html');
     res.sendFile(path.join(__dirname, '../frontend/attendance-scan-result.html'));
 });
 
 // Serve attendance-scan.html directly
 app.get('/attendance-scan.html', (req, res) => {
+    console.log('Serving attendance-scan.html');
     res.sendFile(path.join(__dirname, '../frontend/attendance-scan.html'));
 });
 
-// Catch-all handler: serve index.html for any non-API routes (client-side routing)
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+// Serve attendance-form.html directly
+app.get('/attendance-form.html', (req, res) => {
+    console.log('Serving attendance-form.html');
+    res.sendFile(path.join(__dirname, '../frontend/attendance-form.html'));
+});
+
+// Catch-all handler: serve index.html for any non-API routes that aren't specific HTML files
+app.use((req, res, next) => {
+    // Only serve index.html for routes that don't look like API or specific pages
+    if (!req.path.startsWith('/api') && !req.path.endsWith('.html') && !req.path.includes('.')) {
+        res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    } else if (req.path.endsWith('.html')) {
+        // For other HTML files, try to serve them
+        const filePath = path.join(__dirname, '../frontend', req.path);
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.log('File not found:', req.path);
+                res.status(404).send('File not found');
+            }
+        });
+    } else {
+        next();
+    }
 });
 
 

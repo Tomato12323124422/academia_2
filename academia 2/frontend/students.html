@@ -102,6 +102,39 @@
             flex: 1;
             max-width: 300px;
         }
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .btn-view {
+            background: #1976d2;
+            color: white;
+        }
+        .btn-drop {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-export {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-export:hover {
+            background: #218838;
+        }
+        .export-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -154,6 +187,7 @@
                 <option value="all">All Courses</option>
             </select>
             <input type="text" class="search-box" id="searchBox" placeholder="Search by name or email..." onkeyup="searchStudents()">
+            <button class="btn-export" onclick="exportToCSV()">Export CSV</button>
         </section>
 
         <!-- STUDENTS CONTENT -->
@@ -274,6 +308,7 @@
                                     <th>Email</th>
                                     <th>Enrolled Date</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -285,6 +320,10 @@
                                         <td>${new Date(student.enrolled_at).toLocaleDateString()}</td>
                                         <td>
                                             <span class="status-badge status-active">Active</span>
+                                        </td>
+                                        <td>
+                                            <button class="action-btn btn-view" onclick="viewStudentProgress('${student.student?.id}', '${student.course_id}', '${student.course_title}')">View</button>
+                                            <button class="action-btn btn-drop" onclick="dropStudent('${student.student?.id}', '${student.course_id}', '${student.student?.full_name}')">Drop</button>
                                         </td>
                                     </tr>
                                 `).join('')}

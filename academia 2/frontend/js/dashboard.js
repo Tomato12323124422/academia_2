@@ -931,8 +931,10 @@ function hideAllPanels() {
     document.getElementById("createCoursePanel").style.display = "none";
     document.getElementById("myCoursesPanel").style.display = "none";
     document.getElementById("courseSessionsPanel").style.display = "none";
+    document.getElementById("courseStudentsPanel").style.display = "none";
     
     // Guardian panels
+
     document.getElementById("guardianChildrenPanel").style.display = "none";
     document.getElementById("guardianGradesPanel").style.display = "none";
     document.getElementById("guardianAttendancePanel").style.display = "none";
@@ -1038,10 +1040,12 @@ async function loadMyCourses() {
                         <p>${course.description}</p>
                         <span class="category-tag">${course.category}</span>
                         <span class="duration-tag">${course.duration || 'Not specified'}</span>
-                        <div style="margin-top: 15px;">
+                <div style="margin-top: 15px;">
                             <button class="primary-btn" onclick="startClass('${course.id}')" style="font-size: 12px; padding: 8px 16px;">Start Class</button>
+                            <button class="secondary-btn" onclick="viewCourseStudents('${course.id}')" style="font-size: 12px; padding: 8px 16px; margin-left: 5px;">View Students</button>
                             <button class="secondary-btn" onclick="viewCourseSessions('${course.id}')" style="font-size: 12px; padding: 8px 16px; margin-left: 5px;">View Sessions</button>
                         </div>
+
                     </div>
                 `).join('');
             } else {
@@ -1253,8 +1257,45 @@ async function endSession() {
     }
 }
 
+// View enrolled students for a course
+async function viewCourseStudents(courseId) {
+    hideAllPanels();
+    document.getElementById("courseStudentsPanel").style.display = "block";
+    
+    try {
+        const res = await fetch(`${API}/courses/${courseId}/enrollments`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        
+        const data = await res.json();
+        const studentsList = document.getElementById("studentsList");
+        
+        if (res.ok && data.enrollments && data.enrollments.length > 0) {
+            studentsList.innerHTML = `
+                <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <strong>Total Enrolled: ${data.enrollments.length} students</strong>
+                </div>
+                ${data.enrollments.map((enrollment, index) => `
+                    <div style="padding: 15px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>#${index + 1} ${enrollment.student?.full_name || 'Unknown'}</strong>
+                            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">${enrollment.student?.email || 'No email'}</p>
+                        </div>
+                        <span style="color: #28a745; font-size: 12px;">✓ Enrolled</span>
+                    </div>
+                `).join('')}`;
+        } else {
+            studentsList.innerHTML = "<p>No students enrolled in this course yet.</p>";
+        }
+    } catch (err) {
+        console.error("Error loading students:", err);
+        document.getElementById("studentsList").innerHTML = "<p>Error loading enrolled students.</p>";
+    }
+}
+
 // View course sessions history
 async function viewCourseSessions(courseId) {
+
     hideAllPanels();
     document.getElementById("courseSessionsPanel").style.display = "block";
     

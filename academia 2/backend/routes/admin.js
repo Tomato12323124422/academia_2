@@ -624,28 +624,157 @@ router.get('/activity', adminMiddleware, async (req, res) => {
     try {
         const limit = req.query.limit || 20;
 
+        // Get recent enrollments
         const { data: recentEnrollments } = await supabase
             .from('enrollments')
             .select('*')
             .order('enrolled_at', { ascending: false })
             .limit(limit);
 
+        // Get recent attendance
         const { data: recentAttendance } = await supabase
             .from('attendance')
             .select('*')
             .order('marked_at', { ascending: false })
             .limit(limit);
 
+        // Get recent sessions
         const { data: recentSessions } = await supabase
             .from('sessions')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(limit);
 
+        // Fetch related data for enrollments
+        const enrollmentStudentIds = [...new Set((recentEnrollments || []).map(e => e.student_id))];
+        const enrollmentCourseIds = [...new Set((recentEnrollments || []).map(e => e.course_id))];
+        
+        let enrollmentStudents = [];
+        let enrollmentCourses = [];
+        
+        if (enrollmentStudentIds.length > 0) {
+            const { data: students } = await supabase
+                .from('users')
+                .select('id, full_name')
+                .in('id', enrollmentStudentIds);
+            enrollmentStudents = students || [];
+        }
+        
+        if (enrollmentCourseIds.length > 0) {
+            const { data: courses } = await supabase
+                .from('courses')
+                .select('id, title')
+                .in('id', enrollmentCourseIds);
+            enrollmentCourses = courses || [];
+        }
+
+        // Create maps
+        const studentMap = {};
+        enrollmentStudents.forEach(s => { studentMap[s.id] = s; });
+        const courseMap = {};
+        enrollmentCourses.forEach(c => { courseMap[c.id] = c; });
+
+        // Add student and course info to enrollments
+        const enrichedEnrollments = (recentEnrollments || []).map(e => ({
+            ...e,
+            student: studentMap[e.student_id] || null,
+            course: courseMap[e.course_id] || null
+        }));
+
+        // Fetch related data for attendance
+        const attendanceStudentIds = [...new Set((recentAttendance || []).map(a => a.student_id))];
+        const attendanceSessionIds = [...new Set((recentAttendance || []).map(a => a.session_id))];
+        
+        let attendanceStudents = [];
+        let attendanceSessions = [];
+        
+        if (attendanceStudentIds.length > 0) {
+            const { data: students } = await supabase
+                .from('users')
+                .select('id, full_name')
+                .in('id', attendanceStudentIds);
+            attendanceStudents = students || [];
+        }
+        
+        if (attendanceSessionIds.length > 0) {
+            const { data: sessions } = await supabase
+                .from('sessions')
+                .select('*')
+                .in('id', attendanceSessionIds);
+            attendanceSessions = sessions || [];
+        }
+
+        // Get course IDs from sessions
+        const attendanceCourseIds = [...new Set(attendanceSessions.map(s => s.course_id).filter(Boolean))];
+        let attendanceCourses = [];
+        
+        if (attendanceCourseIds.length > 0) {
+            const { data: courses } = await supabase
+                .from('courses')
+                .select('id, title')
+                .in('id', attendanceCourseIds);
+            attendanceCourses = courses || [];
+        }
+
+        // Create maps
+        const attStudentMap = {};
+        attendanceStudents.forEach(s => { attStudentMap[s.id] = s; });
+        const attSessionMap = {};
+        attendanceSessions.forEach(s => { attSessionMap[s.id] = s; });
+        const attCourseMap = {};
+        attendanceCourses.forEach(c => { attCourseMap[c.id] = c; });
+
+        // Add student and session info to attendance
+        const enrichedAttendance = (recentAttendance || []).map(a => {
+            const session = attSessionMap[a.session_id];
+            const course = session ? attCourseMap[session.course_id] : null;
+            return {
+                ...a,
+                student: attStudentMap[a.student_id] || null,
+                session: session ? { ...session, course: course ? { title: course.title } : null } : null
+            };
+        });
+
+        // Fetch related data for sessions
+        const sessionCourseIds = [...new Set((recentSessions || []).map(s => s.course_id).filter(Boolean))];
+        const sessionTeacherIds = [...new Set((recentSessions || []).map(s => s.teacher_id).filter(Boolean))];
+        
+        let sessionCourses = [];
+        let sessionTeachers = [];
+        
+        if (sessionCourseIds.length > 0) {
+            const { data: courses } = await supabase
+                .from('courses')
+                .select('id, title')
+                .in('id', sessionCourseIds);
+            sessionCourses = courses || [];
+        }
+        
+        if (sessionTeacherIds.length > 0) {
+            const { data: teachers } = await supabase
+                .from('users')
+                .select('id, full_name')
+                .in('id', sessionTeacherIds);
+            sessionTeachers = teachers || [];
+        }
+
+        // Create maps
+        const sessCourseMap = {};
+        sessionCourses.forEach(c => { sessCourseMap[c.id] = c; });
+        const sessTeacherMap = {};
+        sessionTeachers.forEach(t => { sessTeacherMap[t.id] = t; });
+
+        // Add course and teacher info to sessions
+        const enrichedSessions = (recentSessions || []).map(s => ({
+            ...s,
+            course: sessCourseMap[s.course_id] || null,
+            teacher: sessTeacherMap[s.teacher_id] || null
+        }));
+
         res.json({
-            recent_enrollments: recentEnrollments || [],
-            recent_attendance: recentAttendance || [],
-            recent_sessions: recentSessions || []
+            recent_enrollments: enrichedEnrollments,
+            recent_attendance: enrichedAttendance,
+            recent_sessions: enrichedSessions
         });
 
     } catch (err) {

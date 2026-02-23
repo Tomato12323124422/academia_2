@@ -127,7 +127,6 @@ router.get('/search-student-by-email', authMiddleware, async (req, res) => {
                 .eq('student_id', s.id)
                 .single();
 
-
             return {
                 id: s.id,
                 full_name: s.full_name,
@@ -177,7 +176,6 @@ router.post('/link-by-email', authMiddleware, async (req, res) => {
             .eq('student_id', student.id)
             .single();
 
-
         if (existingLink) {
             return res.status(400).json({ message: 'This student is already linked to your account' });
         }
@@ -192,7 +190,6 @@ router.post('/link-by-email', authMiddleware, async (req, res) => {
             }])
             .select()
             .single();
-
 
         if (error) {
             return res.status(500).json({ message: error.message });
@@ -233,27 +230,66 @@ router.get('/child/:childId/courses', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to view this student\'s courses' });
         }
 
-        // Get enrolled courses
+        // Get enrolled courses with simple queries
         const { data: enrollments, error } = await supabase
             .from('enrollments')
-            .select('*, course:courses(*, teacher:users(full_name))')
+            .select('*')
             .eq('student_id', req.params.childId);
 
         if (error) {
             return res.status(500).json({ message: error.message });
         }
 
-        const courses = (enrollments || []).map(e => ({
-            id: e.course?.id,
-            title: e.course?.title || 'Unknown',
-            description: e.course?.description,
-            category: e.course?.category,
-            duration: e.course?.duration,
-            teacher: e.course?.teacher?.full_name || 'Unknown',
-            enrolled_at: e.enrolled_at
-        }));
+        if (!enrollments || enrollments.length === 0) {
+            return res.json({ courses: [] });
+        }
 
-        res.json({ courses });
+        // Get course IDs
+        const courseIds = enrollments.map(e => e.course_id);
+        
+        // Fetch courses
+        const { data: courses, courseError } = await supabase
+            .from('courses')
+            .select('*')
+            .in('id', courseIds);
+
+        if (courseError) {
+            return res.status(500).json({ message: courseError.message });
+        }
+
+        // Fetch teachers
+        const teacherIds = courses.map(c => c.teacher_id).filter(id => id);
+        let teachers = [];
+        if (teacherIds.length > 0) {
+            const { data: teacherData } = await supabase
+                .from('users')
+                .select('id, full_name')
+                .in('id', teacherIds);
+            teachers = teacherData || [];
+        }
+
+        // Create maps
+        const courseMap = {};
+        courses.forEach(c => { courseMap[c.id] = c; });
+        const teacherMap = {};
+        teachers.forEach(t => { teacherMap[t.id] = t; });
+
+        // Combine data
+        const coursesWithDetails = enrollments.map(e => {
+            const course = courseMap[e.course_id];
+            const teacher = course ? teacherMap[course.teacher_id] : null;
+            return {
+                id: course?.id,
+                title: course?.title || 'Unknown',
+                description: course?.description,
+                category: course?.category,
+                duration: course?.duration,
+                teacher: teacher?.full_name || 'Unknown',
+                enrolled_at: e.enrolled_at
+            };
+        });
+
+        res.json({ courses: coursesWithDetails });
 
     } catch (err) {
         console.error(err);
@@ -283,7 +319,7 @@ router.get('/child/:childId/grades', authMiddleware, async (req, res) => {
         // Get student's submissions with grades
         const { data: submissions, error } = await supabase
             .from('submissions')
-            .select('*, assignment:assignments(*, course:courses(title))')
+            .select('*')
             .eq('student_id', req.params.childId)
             .not('grade', 'is', null)
             .order('graded_at', { ascending: false });
@@ -292,20 +328,58 @@ router.get('/child/:childId/grades', authMiddleware, async (req, res) => {
             return res.status(500).json({ message: error.message });
         }
 
+        if (!submissions || submissions.length === 0) {
+            return res.json({ grades: [], overall: { total_points: 0, earned_points: 0, percentage: 0, letter_grade: 'N/A' } });
+        }
+
+        // Get assignment IDs
+        const assignmentIds = submissions.map(s => s.assignment_id);
+        
+        // Fetch assignments
+        const { data: assignments, assignError } = await supabase
+            .from('assignments')
+            .select('*')
+            .in('id', assignmentIds);
+
+        if (assignError) {
+            return res.status(500).json({ message: assignError.message });
+        }
+
+        // Get course IDs
+        const courseIds = assignments.map(a => a.course_id).filter(id => id);
+        
+        // Fetch courses
+        let courses = [];
+        if (courseIds.length > 0) {
+            const { data: courseData } = await supabase
+                .from('courses')
+                .select('id, title')
+                .in('id', courseIds);
+            courses = courseData || [];
+        }
+
+        // Create maps
+        const assignmentMap = {};
+        assignments.forEach(a => { assignmentMap[a.id] = a; });
+        const courseMap = {};
+        courses.forEach(c => { courseMap[c.id] = c; });
+
         // Calculate grades
         let totalPoints = 0;
         let earnedPoints = 0;
         
-        const gradesWithCourse = (submissions || []).map(submission => {
-            const points = submission.assignment?.points || 100;
+        const gradesWithCourse = submissions.map(submission => {
+            const assignment = assignmentMap[submission.assignment_id];
+            const course = assignment ? courseMap[assignment.course_id] : null;
+            const points = assignment?.points || 100;
             const earned = submission.grade || 0;
             totalPoints += points;
             earnedPoints += earned;
             
             return {
                 id: submission.id,
-                assignment_title: submission.assignment?.title || 'Unknown',
-                course_name: submission.assignment?.course?.title || 'Unknown',
+                assignment_title: assignment?.title || 'Unknown',
+                course_name: course?.title || 'Unknown',
                 points: points,
                 grade: earned,
                 percentage: Math.round((earned / points) * 100),
@@ -355,7 +429,7 @@ router.get('/child/:childId/attendance', authMiddleware, async (req, res) => {
         // Get student's attendance records
         const { data: attendance, error } = await supabase
             .from('attendance')
-            .select('*, session:sessions(*, course:courses(title))')
+            .select('*')
             .eq('student_id', req.params.childId)
             .order('marked_at', { ascending: false });
 
@@ -363,14 +437,56 @@ router.get('/child/:childId/attendance', authMiddleware, async (req, res) => {
             return res.status(500).json({ message: error.message });
         }
 
+        // Get session IDs
+        const sessionIds = attendance.map(a => a.session_id).filter(id => id);
+        
+        // Fetch sessions
+        let sessions = [];
+        if (sessionIds.length > 0) {
+            const { data: sessionData } = await supabase
+                .from('sessions')
+                .select('*')
+                .in('id', sessionIds);
+            sessions = sessionData || [];
+        }
+
+        // Get course IDs
+        const courseIds = sessions.map(s => s.course_id).filter(id => id);
+        
+        // Fetch courses
+        let courses = [];
+        if (courseIds.length > 0) {
+            const { data: courseData } = await supabase
+                .from('courses')
+                .select('id, title')
+                .in('id', courseIds);
+            courses = courseData || [];
+        }
+
+        // Create maps
+        const sessionMap = {};
+        sessions.forEach(s => { sessionMap[s.id] = s; });
+        const courseMap = {};
+        courses.forEach(c => { courseMap[c.id] = c; });
+
+        // Add session and course info to attendance
+        const attendanceWithDetails = attendance.map(a => {
+            const session = sessionMap[a.session_id];
+            const course = session ? courseMap[session.course_id] : null;
+            return {
+                ...a,
+                session: session ? { ...session, course: course ? { title: course.title } : null } : null
+            };
+        });
+
         // Calculate attendance summary
-        const total = attendance?.length || 0;
-        const present = attendance?.filter(a => a.status === 'present').length || 0;
-        const absent = attendance?.filter(a => a.status === 'absent').length || 0;
+        const total = attendanceWithDetails?.length || 0;
+        const present = attendanceWithDetails?.filter(a => a.status === 'present').length || 0;
+        const absent = attendanceWithDetails?.filter(a => a.status === 'absent').length || 0;
         const rate = total > 0 ? Math.round((present / total) * 100) : 0;
 
         res.json({ 
-            attendance: attendance || [],
+            attendance: attendanceWithDetails || [],
             summary: {
                 total,
                 present,
@@ -412,18 +528,42 @@ router.get('/child/:childId/achievements', authMiddleware, async (req, res) => {
             .single();
 
         // Get student's badges
-        const { data: badges } = await supabase
+        const { data: userBadges, ubError } = await supabase
             .from('user_badges')
-            .select('*, badge:badges(*)')
+            .select('*')
             .eq('user_id', req.params.childId);
 
-        const achievements = (badges || []).map(ub => ({
-            id: ub.badge?.id,
-            name: ub.badge?.name,
-            description: ub.badge?.description,
-            icon: ub.badge?.icon,
-            earned_at: ub.earned_at
-        }));
+        if (ubError) {
+            return res.status(500).json({ message: ubError.message });
+        }
+
+        // Get badge IDs
+        const badgeIds = (userBadges || []).map(ub => ub.badge_id).filter(id => id);
+        
+        // Fetch badges
+        let badges = [];
+        if (badgeIds.length > 0) {
+            const { data: badgeData } = await supabase
+                .from('badges')
+                .select('*')
+                .in('id', badgeIds);
+            badges = badgeData || [];
+        }
+
+        // Create map
+        const badgeMap = {};
+        badges.forEach(b => { badgeMap[b.id] = b; });
+
+        const achievements = (userBadges || []).map(ub => {
+            const badge = badgeMap[ub.badge_id];
+            return {
+                id: badge?.id,
+                name: badge?.name,
+                description: badge?.description,
+                icon: badge?.icon,
+                earned_at: ub.earned_at
+            };
+        });
 
         res.json({ 
             achievements,
@@ -459,10 +599,10 @@ router.get('/child/:childId/assignments', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to view this student\'s assignments' });
         }
 
-        // Get submissions with assignment details
+        // Get submissions
         const { data: submissions, error } = await supabase
             .from('submissions')
-            .select('*, assignment:assignments(*, course:courses(title))')
+            .select('*')
             .eq('student_id', req.params.childId)
             .order('submitted_at', { ascending: false });
 
@@ -470,20 +610,60 @@ router.get('/child/:childId/assignments', authMiddleware, async (req, res) => {
             return res.status(500).json({ message: error.message });
         }
 
-        const assignments = (submissions || []).map(sub => ({
-            id: sub.id,
-            title: sub.assignment?.title || 'Unknown',
-            description: sub.assignment?.description,
-            course_name: sub.assignment?.course?.title || 'Unknown',
-            due_date: sub.assignment?.due_date,
-            points: sub.assignment?.points || 100,
-            grade: sub.grade,
-            status: sub.status,
-            submitted_at: sub.submitted_at,
-            graded_at: sub.graded_at
-        }));
+        if (!submissions || submissions.length === 0) {
+            return res.json({ assignments: [] });
+        }
 
-        res.json({ assignments });
+        // Get assignment IDs
+        const assignmentIds = submissions.map(s => s.assignment_id);
+        
+        // Fetch assignments
+        const { data: assignments, assignError } = await supabase
+            .from('assignments')
+            .select('*')
+            .in('id', assignmentIds);
+
+        if (assignError) {
+            return res.status(500).json({ message: assignError.message });
+        }
+
+        // Get course IDs
+        const courseIds = assignments.map(a => a.course_id).filter(id => id);
+        
+        // Fetch courses
+        let courses = [];
+        if (courseIds.length > 0) {
+            const { data: courseData } = await supabase
+                .from('courses')
+                .select('id, title')
+                .in('id', courseIds);
+            courses = courseData || [];
+        }
+
+        // Create maps
+        const assignmentMap = {};
+        assignments.forEach(a => { assignmentMap[a.id] = a; });
+        const courseMap = {};
+        courses.forEach(c => { courseMap[c.id] = c; });
+
+        const assignmentsWithDetails = submissions.map(sub => {
+            const assignment = assignmentMap[sub.assignment_id];
+            const course = assignment ? courseMap[assignment.course_id] : null;
+            return {
+                id: sub.id,
+                title: assignment?.title || 'Unknown',
+                description: assignment?.description,
+                course_name: course?.title || 'Unknown',
+                due_date: assignment?.due_date,
+                points: assignment?.points || 100,
+                grade: sub.grade,
+                status: sub.status,
+                submitted_at: sub.submitted_at,
+                graded_at: sub.graded_at
+            };
+        });
+
+        res.json({ assignments: assignmentsWithDetails });
 
     } catch (err) {
         console.error(err);

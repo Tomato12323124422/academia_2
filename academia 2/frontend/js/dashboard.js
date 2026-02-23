@@ -243,18 +243,19 @@ async function loadStudentLiveClasses() {
         const data = await res.json();
         const container = document.getElementById("studentLiveClasses");
         
-        if (res.ok && data.sessions && data.sessions.length > 0) {
-            container.innerHTML = data.sessions.slice(0, 5).map(session => `
+if (res.ok && data.sessions && data.sessions.length > 0) {
+            container.innerHTML = data.sessions.slice(0, 5).map(session => {
+                // Use real local time from start_time if available
+                const startTime = session.start_time || session.date;
+                return `
                 <div class="live-class-item live-now">
                     <div class="live-class-info">
                         <h4>${session.course?.title || 'Unknown Course'}</h4>
-                        <p>Started: ${new Date(session.date).toLocaleTimeString()}</p>
+<p>Started: ${startTime ? new Date(startTime).toLocaleTimeString() : '-'}</p>
                     </div>
-                    <div>
-                        <span class="live-badge">LIVE NOW</span>
-                    </div>
+                    <div><span class="live-badge">LIVE NOW</span></div>
                 </div>
-            `).join('');
+            `}).join('');
         } else {
             container.innerHTML = "<p>No live classes at the moment.</p>";
         }
@@ -470,23 +471,41 @@ async function loadInstructorLiveClasses() {
                 }
             }
             
-            // Sort by date (most recent first)
-            allSessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+// Sort by start_time (most recent first)
+            allSessions.sort((a, b) => {
+                const timeA = a.start_time || a.date;
+                const timeB = b.start_time || b.date;
+                return new Date(timeB) - new Date(timeA);
+            });
             
             if (allSessions.length > 0) {
-                container.innerHTML = allSessions.slice(0, 10).map(session => `
-                    <div class="session-item ${session.status === 'active' ? 'live-now' : ''}">
+                container.innerHTML = allSessions.slice(0, 10).map(session => {
+                    // Use real local times
+                    const startTime = session.start_time || session.date;
+                    const endTime = session.end_time;
+                    
+                    let timeDisplay = '';
+                    if (endTime) {
+                        // Ended session - show both start and end times
+                        timeDisplay = `${new Date(startTime).toLocaleTimeString()} - ${new Date(endTime).toLocaleTimeString()}`;
+                    } else {
+                        // Active session - show just start time
+                        timeDisplay = new Date(startTime).toLocaleString();
+                    }
+                    
+                    return `
+                    <div class="session-item ${!endTime && session.status === 'active' ? 'live-now' : ''}">
                         <div class="session-info">
                             <h4>${session.courseTitle}</h4>
-                            <p>${new Date(session.date).toLocaleString()}</p>
+                            <p>${timeDisplay}</p>
                         </div>
                         <div>
-                            <span class="status-badge ${session.status === 'active' ? 'status-active' : 'status-ended'}">
-                                ${session.status}
+                            <span class="status-badge ${!endTime && session.status === 'active' ? 'status-active' : 'status-ended'}">
+                                ${!endTime && session.status === 'active' ? 'LIVE NOW' : 'ENDED'}
                             </span>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } else {
                 container.innerHTML = "<p>No sessions yet. Start a class from your courses!</p>";
             }

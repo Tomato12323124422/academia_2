@@ -146,8 +146,9 @@ router.get('/enrolled', authMiddleware, async (req, res) => {
         // Get student's enrollments
         const { data: enrollments, error: enrollError } = await supabase
             .from('enrollments')
-            .select('course_id, enrolled_at')
+            .select('course_id')
             .eq('student_id', req.user.id);
+
 
         if (enrollError) {
             return res.status(500).json({ message: enrollError.message });
@@ -170,16 +171,8 @@ router.get('/enrolled', authMiddleware, async (req, res) => {
             return res.status(500).json({ message: error.message });
         }
 
-        // Map enrollments to courses
-        const coursesWithEnrollment = courses.map(course => {
-            const enrollment = enrollments.find(e => e.course_id === course.id);
-            return {
-                ...course,
-                enrolled_at: enrollment?.enrolled_at
-            };
-        });
+        res.json({ courses });
 
-        res.json({ courses: coursesWithEnrollment });
 
     } catch (err) {
         console.error(err);
@@ -228,9 +221,9 @@ router.post('/:id/enroll', authMiddleware, async (req, res) => {
             .from('enrollments')
             .insert([{
                 course_id: req.params.id,
-                student_id: req.user.id,
-                enrolled_at: new Date().toISOString()
+                student_id: req.user.id
             }]);
+
 
         if (error) {
             return res.status(500).json({ message: error.message });
@@ -329,9 +322,9 @@ router.post('/enroll-by-code', authMiddleware, async (req, res) => {
             .from('enrollments')
             .insert([{
                 course_id: courseData.id,
-                student_id: req.user.id,
-                enrolled_at: new Date().toISOString()
+                student_id: req.user.id
             }]);
+
 
         if (error) {
             return res.status(500).json({ message: error.message });

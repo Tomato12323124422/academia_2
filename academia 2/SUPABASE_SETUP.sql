@@ -42,13 +42,19 @@ CREATE POLICY "Admins can manage all users"
 -- 2. PARENT-STUDENT LINK TABLE
 -- ============================================
 
+-- Add relationship column if table already exists
+ALTER TABLE parent_student ADD COLUMN IF NOT EXISTS relationship TEXT DEFAULT 'Child';
+
 CREATE TABLE IF NOT EXISTS parent_student (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     parent_id UUID REFERENCES users(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    relationship TEXT DEFAULT 'Child',
     created_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(parent_id, student_id)
 );
+
+
 
 -- Enable RLS
 ALTER TABLE parent_student ENABLE ROW LEVEL SECURITY;
@@ -392,12 +398,14 @@ VALUES (
 
 -- Link Parent to Student
 /*
-INSERT INTO parent_student (parent_id, student_id)
+INSERT INTO parent_student (parent_id, student_id, relationship)
 VALUES (
     (SELECT id FROM users WHERE email = 'parent@academia.edu'),
-    (SELECT id FROM users WHERE email = 'student@academia.edu')
+    (SELECT id FROM users WHERE email = 'student@academia.edu'),
+    'Child'
 );
 */
+
 
 -- Create Sample Course
 /*

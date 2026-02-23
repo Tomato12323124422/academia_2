@@ -342,15 +342,20 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
         const { data: enrollments, error: enrollError } = await enrollmentsQuery;
 
         if (enrollError) {
+            console.error('Enrollments fetch error:', enrollError);
             return res.status(500).json({ message: enrollError.message });
         }
 
         if (!enrollments || enrollments.length === 0) {
+            console.log('No enrollments found');
             return res.json({ enrollments: [], count: 0 });
         }
 
-        const studentIds = [...new Set(enrollments.map(e => e.student_id))];
-        const courseIds = [...new Set(enrollments.map(e => e.course_id))];
+        // Filter out any enrollments with null student_id or course_id
+        const validEnrollments = enrollments.filter(e => e.student_id && e.course_id);
+
+        const studentIds = [...new Set(validEnrollments.map(e => e.student_id))];
+        const courseIds = [...new Set(validEnrollments.map(e => e.course_id))];
 
         let studentsData = [];
         if (studentIds.length > 0) {

@@ -336,27 +336,55 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
     try {
         const { course_id, student_id } = req.query;
         
-        let query = supabase
+        // First get enrollments
+        let enrollmentsQuery = supabase
             .from('enrollments')
-            .select(`
-                *,
-                student:users(id, full_name, email),
-                course:courses(id, title, teacher_id)
-            `)
+            .select('*')
             .order('enrolled_at', { ascending: false });
 
-        if (course_id) query = query.eq('course_id', course_id);
-        if (student_id) query = query.eq('student_id', student_id);
+        if (course_id) enrollmentsQuery = enrollmentsQuery.eq('course_id', course_id);
+        if (student_id) enrollmentsQuery = enrollmentsQuery.eq('student_id', student_id);
 
-        const { data, error } = await query;
+        const { data: enrollments, error: enrollError } = await enrollmentsQuery;
 
-        if (error) {
-            return res.status(500).json({ message: error.message });
+        if (enrollError) {
+            return res.status(500).json({ message: enrollError.message });
         }
 
+        // Get all unique student IDs and course IDs
+        const studentIds = [...new Set(enrollments.map(e => e.student_id))];
+        const courseIds = [...new Set(enrollments.map(e => e.course_id))];
+
+        // Fetch students
+        let studentsData = [];
+        if (studentIds.length > 0) {
+            const { data: students } = await supabase
+                .from('users')
+                .select('id, full_name, email')
+                .in('id', studentIds);
+            studentsData = students || [];
+        }
+
+        // Fetch courses
+        let coursesData = [];
+        if (courseIds.length > 0) {
+            const { data: courses } = await supabase
+                .from('courses')
+                .select('id, title, teacher_id')
+                .in('id', courseIds);
+            coursesData = courses || [];
+        }
+
+        // Map student and course data to enrollments
+        const formattedEnrollments = enrollments.map(e => ({
+            ...e,
+            student: studentsData.find(s => s.id === e.student_id),
+            course: coursesData.find(c => c.id === e.course_id)
+        }));
+
         res.json({ 
-            enrollments: data,
-            count: data.length
+            enrollments: formattedEnrollments,
+            count: formattedEnrollments.length
         });
 
     } catch (err) {

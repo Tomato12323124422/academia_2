@@ -10,6 +10,8 @@ const assignmentsRoutes = require('./routes/assignments');
 const gradesRoutes = require('./routes/grades');
 const gamificationRoutes = require('./routes/gamification');
 const guardianRoutes = require('./routes/guardian');
+const adminRoutes = require('./routes/admin');
+
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use('/api/assignments', assignmentsRoutes);
 app.use('/api/grades', gradesRoutes);
 app.use('/api/gamification', gamificationRoutes);
 app.use('/api/guardian', guardianRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 // Health check endpoint
 app.get('/health', (req, res) => {

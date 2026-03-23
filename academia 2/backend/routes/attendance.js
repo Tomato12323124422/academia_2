@@ -139,15 +139,21 @@ router.post('/sessions', authMiddleware, async (req, res) => {
 // GET SESSION QR CODE (Dynamic with rotating token)
 router.get('/sessions/:id/qr', authMiddleware, async (req, res) => {
     try {
+        const sessionIdNum = parseInt(req.params.id, 10);
+        if (isNaN(sessionIdNum)) {
+            return res.status(400).json({ message: 'Invalid session ID format' });
+        }
+
         const { data: session, error } = await supabase
             .from('sessions')
             .select('*')
-            .eq('id', req.params.id)
+            .eq('id', sessionIdNum)
             .eq('status', 'active');
 
         if (error || !session || session.length === 0) {
             return res.status(404).json({ message: 'Session not found or not active' });
         }
+
 
         // Only teacher who created the session can get QR
         if (session[0].teacher_id !== req.user.id && req.user.role !== 'admin') {
@@ -179,15 +185,21 @@ router.get('/sessions/:id/qr', authMiddleware, async (req, res) => {
 // GET CURRENT TOKEN FOR SESSION (for frontend polling)
 router.get('/sessions/:id/token', authMiddleware, async (req, res) => {
     try {
+        const sessionIdNum = parseInt(req.params.id, 10);
+        if (isNaN(sessionIdNum)) {
+            return res.status(400).json({ message: 'Invalid session ID format' });
+        }
+
         const { data: session, error } = await supabase
             .from('sessions')
             .select('*')
-            .eq('id', req.params.id)
+            .eq('id', sessionIdNum)
             .eq('status', 'active');
 
         if (error || !session || session.length === 0) {
             return res.status(404).json({ message: 'Session not found or not active' });
         }
+
 
         // Only teacher who created the session can get token
         if (session[0].teacher_id !== req.user.id && req.user.role !== 'admin') {
@@ -225,6 +237,11 @@ router.post('/attendance', authMiddleware, async (req, res) => {
             return res.status(400).json({ message: 'Session ID is required' });
         }
 
+        const sessionIdNum = parseInt(session_id, 10);
+        if (isNaN(sessionIdNum)) {
+            return res.status(400).json({ message: 'Invalid session ID format' });
+        }
+
         if (!token) {
             return res.status(400).json({ message: 'Token is required. Please scan the current QR code.' });
         }
@@ -242,8 +259,9 @@ router.post('/attendance', authMiddleware, async (req, res) => {
         const { data: session, error: sessionError } = await supabase
             .from('sessions')
             .select('*')
-            .eq('id', session_id)
+            .eq('id', sessionIdNum)
             .eq('status', 'active');
+
 
         if (sessionError || !session || session.length === 0) {
             return res.status(404).json({ message: 'Session not found or not active' });
@@ -324,12 +342,16 @@ router.post('/attendance/register', async (req, res) => {
 
 
         // Verify session exists and is active
-const sessionIdInt = parseInt(sessionId);
+const sessionIdNum = parseInt(sessionId, 10);
+        if (isNaN(sessionIdNum)) {
+            return res.status(400).json({ message: 'Invalid session ID format' });
+        }
         const { data: session, error: sessionError } = await supabase
             .from('sessions')
             .select('*')
-            .eq('id', sessionIdInt)
+            .eq('id', sessionIdNum)
             .eq('status', 'active');
+
 
         if (sessionError || !session || session.length === 0) {
             return res.status(404).json({ message: 'Session not found or not active' });
@@ -339,8 +361,9 @@ const sessionIdInt = parseInt(sessionId);
         const { data: existingAttendance, error: checkError } = await supabase
             .from('attendance')
             .select('*')
-            .eq('session_id', sessionIdInt)
+            .eq('session_id', sessionIdNum)
             .eq('reg_no', regNo);
+
 
         if (existingAttendance && existingAttendance.length > 0) {
             return res.status(400).json({ message: 'Attendance already marked for this session' });
@@ -375,11 +398,16 @@ const sessionIdInt = parseInt(sessionId);
 // GET SESSION ATTENDANCE (Teacher only)
 router.get('/sessions/:id/attendance', authMiddleware, async (req, res) => {
     try {
+        const sessionIdNum = parseInt(req.params.id, 10);
+        if (isNaN(sessionIdNum)) {
+            return res.status(400).json({ message: 'Invalid session ID format' });
+        }
         // Get session details
         const { data: session, error: sessionError } = await supabase
             .from('sessions')
             .select('*')
-            .eq('id', req.params.id);
+            .eq('id', sessionIdNum);
+
 
         if (sessionError || !session || session.length === 0) {
             return res.status(404).json({ message: 'Session not found' });
@@ -398,8 +426,9 @@ router.get('/sessions/:id/attendance', authMiddleware, async (req, res) => {
                 *,
                 student:users(id, full_name, email)
             `)
-            .eq('session_id', req.params.id)
+            .eq('session_id', sessionIdNum)
             .order('marked_at', { ascending: false });
+
 
         if (error) {
             return res.status(500).json({ message: error.message });

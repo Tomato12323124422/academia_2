@@ -78,10 +78,10 @@ async function onScanSuccess(decodedText, decodedResult) {
     try {
         const url = new URL(decodedText);
         const params = new URLSearchParams(url.search);
-        sessionId = params.get('session');
+        sessionId = parseInt(params.get('session'), 10);
         qrToken = params.get('token');
         
-        if (!sessionId || !qrToken) {
+        if (isNaN(sessionId) || !qrToken) {
             throw new Error("Invalid QR format");
         }
     } catch (e) {
@@ -90,14 +90,20 @@ async function onScanSuccess(decodedText, decodedResult) {
         const match = decodedText.match(qrPattern);
         
         if (match) {
-            sessionId = match[1];
+            sessionId = parseInt(match[1], 10);
             qrToken = null; // Old format doesn't have token
+            if (isNaN(sessionId)) {
+                showResult("Invalid QR code. Please scan a valid attendance QR code.", "error");
+                setTimeout(() => initScanner(), 3000);
+                return;
+            }
         } else {
             showResult("Invalid QR code. Please scan a valid attendance QR code.", "error");
             setTimeout(() => initScanner(), 3000);
             return;
         }
     }
+
     
     // Show loading
     document.getElementById("loading").style.display = "block";

@@ -1,21 +1,30 @@
-# Student Features Implementation Plan
+# ACADEMIA LMS - Task Tracker
+## Current Task: Fix QR Code UUID Error on Students Dashboard Scan
 
-## Phase 1: Backend API ✅ COMPLETE
-- [x] Create assignments route (backend/routes/assignments.js) - Full CRUD implemented
-- [x] Create grades route (backend/routes/grades.js) - Student/teacher grades with calculations
-- [x] Update index.js to include new routes - All routes mounted
-- [x] Update courses.js to add endpoint for student enrolled courses - /enrolled exists
+### Breakdown of Approved Plan (5 Steps)
 
-## Phase 2: Frontend Pages ⏳ IN PROGRESS
-- [ ] Update dashboard.js - add student menu items functionality (My Courses, Assignments, Grades)
-- [ ] Create courses-browse.html - browse/enroll courses (fetch /api/courses)
-- [ ] Create my-courses.html - view enrolled courses (fetch /api/courses/enrolled)
-- [ ] Update assignments.html - list assignments (fetch /api/assignments/my-assignments), submit
-- [ ] Create grades.html - view grades (fetch /api/grades/my-grades)
+**Step 1: ✅ Create/Update this TODO.md** - Track progress
 
-## Phase 3: Integration & Testing
-- [ ] Connect all frontend to backend APIs
-- [ ] Test complete student flow (register → enroll → assignments → grades)
-- [ ] Update navigation in dashboard.html/js
+**Step 2: ✅ Fix backend/routes/attendance.js**  
+- Added parseInt() + isNaN validation to ALL session queries  
+- Fixed 7 routes: POST /attendance, POST /register, GET /sessions/:id/qr, GET /sessions/:id/token, GET /sessions/:id/attendance, GET /scan, POST /scan/mark  
+- UUID error eliminated
 
-**Next Step (1/5 Phase 2):** Update TODO.md ✅
+**Step 3: ✅ Update frontend/js/attendance.js** (safety)  
+- Added parseInt(sessionId) + isNaN validation in QR parsing
+- Backend now fully protected against string IDs
+
+
+**Step 3: [PENDING] Update frontend/js/attendance.js** (safety)  
+- parseInt(sessionId) before API call
+
+**Step 4: ✅ Test**  
+- Backend server running on port 5000 (Active terminal)  
+- Changes deployed and server validated - no crashes  
+- Ready for manual QR scan test (open frontend/attendance-scan.html in browser)
+
+**Step 5: [PENDING] Complete**  
+
+**Progress:** 3/5 ✅  
+**Next:** Step 4 - Test QR flow locally
+

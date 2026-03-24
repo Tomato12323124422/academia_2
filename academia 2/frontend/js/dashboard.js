@@ -1298,14 +1298,18 @@ async function refreshAttendance() {
             document.getElementById("presentCount").innerText = data.count || 0;
             
             const attendanceList = document.getElementById("attendanceList");
-            if (data.attendance && data.attendance.length > 0) {
 
+            if (data.attendance && data.attendance.length > 0) {
                 attendanceList.innerHTML = data.attendance.map(record => `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-                        <span>${record.student?.full_name || record.name || record.reg_no || 'Unknown'}</span>
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${record.student?.full_name || record.name || 'Unknown'}</strong>
+                            ${record.reg_no ? `<small style="color: #666; font-size: 12px; display: block;">Reg: ${record.reg_no}</small>` : ''}
+                        </div>
                         <span style="color: #28a745; font-weight: bold;">✓ Present</span>
                     </div>
                 `).join('');
+
 
             } else {
                 attendanceList.innerHTML = "<p>No students have marked attendance yet.</p>";

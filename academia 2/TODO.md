@@ -1,33 +1,23 @@
-# TODO - Fix QR Attendance Error "invalid input syntax for type uuid: '38'"
+# QR Attendance UUID Fix - DB Fixed ✅
 
-## Breakdown of approved plan:
+**Status: 1/4 complete**
 
-✅ **Step 1: Create this TODO.md** - Track progress
+**✅ 1. DB Schema**
+- attendance.session_id → int8 (BIGSERIAL)
+- Matches sessions.id BIGSERIAL
 
-**Step 2: Fix backend/routes/attendance.js session_id parsing**
-- ✅ Fixed all parseInt, queries, inserts use numbers
-- Target POST /attendance, POST /attendance/register insert, POST /scan/mark
-- Ensure sessionIdNum used consistently
+**⏳ 2. Backend - Remove parseInt (CURRENT)**
+- academia 2/backend/routes/attendance.js (8 locations)
 
-**Step 3: Fix static file serving in backend/index.js**
-- ✅ Fixed static paths: process.cwd()/'frontend' and 'academia 2/frontend'
+**3. Frontend - Raw sessionId**
+- academia 2/frontend/js/attendance.js
 
-**Step 4: Update QR to point to form flow**
-- ✅ Updated QRData to attendance-form.html
-- Frontend attendance-form.html POSTs to /api/attendance/scan/mark (manual form ✅)
+**4. Test**
+- Teacher: dashboard → course → Start Class → QR
+- Student: scan → form → name/regNo → Submit
+- Teacher: sees list
 
-**Step 5: Test end-to-end**
-- [ ] Teacher: POST /api/attendance/sessions {course_id: UUID}
-- [ ] Scan QR → attendance-form.html loads with session/token
-- [ ] Submit name/regNo → Success, no UUID error
-- [ ] Teacher dashboard: /api/attendance/sessions/ID/attendance shows list
+**5. Restart** `taskkill /f /im node.exe && cd "academia 2/backend" && node index.js`
 
-**Step 6: Student dashboard shows history**
-- [ ] GET /api/attendance/my-attendance works
-
-**Step 7: attempt_completion**
-
-Current Status: Backend partially fixed (queries parseInt), inserts still need sessionIdNum
-
-Next: Complete backend fixes, static path, QR URL
+**Ready for Step 2 edits?**
 

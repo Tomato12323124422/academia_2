@@ -139,10 +139,8 @@ router.post('/sessions', authMiddleware, async (req, res) => {
 // GET SESSION QR CODE (Dynamic with rotating token)
 router.get('/sessions/:id/qr', authMiddleware, async (req, res) => {
     try {
-        const sessionIdNum = parseInt(req.params.id, 10);
-        if (isNaN(sessionIdNum)) {
-            return res.status(400).json({ message: 'Invalid session ID format' });
-        }
+        // UUID - no parseInt needed
+        const sessionIdNum = req.params.id;
 
         const { data: session, error } = await supabase
             .from('sessions')
@@ -237,10 +235,8 @@ router.post('/attendance', authMiddleware, async (req, res) => {
             return res.status(400).json({ message: 'Session ID is required' });
         }
 
-        const sessionIdNum = parseInt(session_id, 10);
-        if (isNaN(sessionIdNum)) {
-            return res.status(400).json({ message: 'Invalid session ID format' });
-        }
+        // UUID - no parseInt needed
+        const sessionIdNum = session_id;
 
         if (!token) {
             return res.status(400).json({ message: 'Token is required. Please scan the current QR code.' });
@@ -343,10 +339,8 @@ router.post('/attendance/register', async (req, res) => {
 
 
         // Verify session exists and is active
-const sessionIdNum = parseInt(sessionId, 10);
-        if (isNaN(sessionIdNum)) {
-            return res.status(400).json({ message: 'Invalid session ID format' });
-        }
+        // UUID - no parseInt needed
+        const sessionIdNum = sessionId;
         const { data: session, error: sessionError } = await supabase
             .from('sessions')
             .select('*')

@@ -111,7 +111,8 @@ async function onScanSuccess(decodedText, decodedResult) {
     
     // Mark attendance with token validation
     try {
-        const res = await fetch(`${API}/attendance/attendance`, {
+
+        const res = await fetch(`${API}/attendance/scan`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
@@ -129,8 +130,7 @@ async function onScanSuccess(decodedText, decodedResult) {
         document.getElementById("loading").style.display = "none";
         
         if (res.ok) {
-            showResult("✅ Attendance marked successfully! You are present.", "success");
-            playBeep();
+            window.location.href = `attendance-form.html?session=${sessionId}&token=${qrToken}`;
         } else {
             if (data.expired) {
                 showResult("⏱️ " + data.message + "<br><br>Please ask your teacher to refresh the QR code and scan again.", "error");
@@ -154,6 +154,7 @@ async function onScanSuccess(decodedText, decodedResult) {
         document.getElementById("scanResult").innerHTML = "";
         initScanner();
     }, 5000);
+
 }
 
 // Handle scan failure (no QR code found)

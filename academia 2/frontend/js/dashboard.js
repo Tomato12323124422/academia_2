@@ -1299,12 +1299,14 @@ async function refreshAttendance() {
             
             const attendanceList = document.getElementById("attendanceList");
             if (data.attendance && data.attendance.length > 0) {
+
                 attendanceList.innerHTML = data.attendance.map(record => `
                     <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-                        <span>${record.student?.full_name || record.name || 'Unknown'}</span>
+                        <span>${record.student?.full_name || record.name || record.reg_no || 'Unknown'}</span>
                         <span style="color: #28a745; font-weight: bold;">✓ Present</span>
                     </div>
                 `).join('');
+
             } else {
                 attendanceList.innerHTML = "<p>No students have marked attendance yet.</p>";
             }

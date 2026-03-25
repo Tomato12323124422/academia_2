@@ -165,36 +165,5 @@ router.get('/upcoming', authMiddleware, async (req, res) => {
     }
 });
 
-
-
-        // Get enrolled courses
-        const { data: enrollments } = await supabase
-            .from('enrollments')
-            .select('course_id')
-            .eq('student_id', req.user.id);
-
-        const courseIds = enrollments?.map(e => e.course_id) || [];
-
-        const { data: liveClasses, error } = await supabase
-            .from('live_classes')
-            .select(`
-                *,
-                course:courses(title)
-            `)
-            .in('course_id', courseIds)
-            .gte('scheduled_at', new Date().toISOString())
-            .order('scheduled_at', { ascending: true });
-
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        res.json({ liveClasses: liveClasses || [] });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
 module.exports = router;
+

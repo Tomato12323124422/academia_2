@@ -326,82 +326,42 @@ router.delete('/courses/:id', adminMiddleware, async (req, res) => {
     }
 });
 
-// GET ALL ENROLLMENTS - FIXED
+// GET ALL ENROLLMENTS - SIMPLIFIED
 router.get('/enrollments', adminMiddleware, async (req, res) => {
     try {
+        console.log('Admin enrollments request received');
         const { course_id, student_id } = req.query;
         
-        let enrollmentsQuery = supabase
+        let query = supabase
             .from('enrollments')
-            .select('*')
+            .select(`
+                *,
+                student:users!enrollments_student_id_fkey(id, full_name, email),
+                course:courses(id, title, teacher_id)
+            `)
             .order('enrolled_at', { ascending: false });
 
-        if (course_id) enrollmentsQuery = enrollmentsQuery.eq('course_id', course_id);
-        if (student_id) enrollmentsQuery = enrollmentsQuery.eq('student_id', student_id);
+        if (course_id) query = query.eq('course_id', course_id);
+        if (student_id) query = query.eq('student_id', student_id);
 
-        const { data: enrollments, error: enrollError } = await enrollmentsQuery;
-
-        if (enrollError) {
-            console.error('Enrollments fetch error:', enrollError);
-            return res.status(500).json({ message: enrollError.message });
-        }
-
-        // Return empty array if no enrollments
-        if (!enrollments || enrollments.length === 0) {
-            return res.json({ enrollments: [], count: 0 });
-        }
-
-        // Get unique student and course IDs
-        const studentIds = [...new Set(enrollments.map(e => e.student_id).filter(Boolean))];
-        const courseIds = [...new Set(enrollments.map(e => e.course_id).filter(Boolean))];
-
-        // Fetch students if we have any
-        let studentsData = [];
-        if (studentIds.length > 0) {
-            try {
-                const { data: students } = await supabase
-                    .from('users')
-                    .select('id, full_name, email')
-                    .in('id', studentIds);
-                studentsData = students || [];
-            } catch (e) {
-                console.error('Error fetching students:', e);
-            }
-        }
-
-        // Fetch courses if we have any
-        let coursesData = [];
-        if (courseIds.length > 0) {
-            try {
-                const { data: courses } = await supabase
-                    .from('courses')
-                    .select('id, title, teacher_id')
-                    .in('id', courseIds);
-                coursesData = courses || [];
-            } catch (e) {
-                console.error('Error fetching courses:', e);
-            }
-        }
-
-        // Create maps for quick lookup
-        const studentMap = {};
-        studentsData.forEach(s => { studentMap[s.id] = s; });
+        const { data: enrollments, error } = await query;
         
-        const courseMap = {};
-        coursesData.forEach(c => { courseMap[c.id] = c; });
+        console.log('Enrollments data:', enrollments ? enrollments.length : 0);
+        console.log('Error:', error);
 
-        // Format enrollments with student and course data
-        const formattedEnrollments = enrollments.map(e => ({
-            ...e,
-            student: studentMap[e.student_id] || null,
-            course: courseMap[e.course_id] || null
-        })).filter(e => e.student && e.course); // Only include enrollments with valid student and course
+        if (error) {
+            console.error('Supabase enrollments error:', error);
+            return res.status(500).json({ message: error.message, details: error });
+        }
 
-        res.json({ enrollments: formattedEnrollments, count: formattedEnrollments.length });
+        res.json({ 
+            enrollments: enrollments || [], 
+            count: enrollments ? enrollments.length : 0 
+        });
 
     } catch (err) {
-        console.error('Error in enrollments endpoint:', err);
-        res.status(500).json({ message: 'Server error: ' + err.message });
+        console.error('Full enrollments endpoint error:', err);
+        res.status(500).json({ message: err.message, stack: err.stack });
     }
 });
 

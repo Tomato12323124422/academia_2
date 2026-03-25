@@ -1,23 +1,25 @@
-# QR Attendance UUID Fix - DB Fixed ✅
+# ACADEMIA LMS - Task Tracker
 
-**Status: 1/4 complete**
+## CURRENT TASK: Fix Admin Dashboard Enrollments (500 Error)
 
-**✅ 1. DB Schema**
-- attendance.session_id → int8 (BIGSERIAL)
-- Matches sessions.id BIGSERIAL
+### Approved Plan Steps:
+- [ ] 1. Simplify backend/routes/admin.js GET /enrollments → raw enrollments no joins
+- [ ] 2. Add console.log('ENROLLMENTS:', data) all responses
+- [ ] 3. Frontend admin-dashboard.js → handle empty/null gracefully
+- [ ] 4. Test local → localhost:5000/api/admin/enrollments
+- [ ] 5. Git commit → Render deploy
+- [ ] 6. Verify admin → Enrollments tab loads
 
-**⏳ 2. Backend - Remove parseInt (CURRENT)**
-- academia 2/backend/routes/attendance.js (8 locations)
+### PREV TASKS (QR Fixed):
+- [x] Fix UUID '38' → parseInt(session_id)
+- [x] QR → attendance-form.html redirect
+- [x] Teacher list: Name + RegNo ✓
 
-**3. Frontend - Raw sessionId**
-- academia 2/frontend/js/attendance.js
-
-**4. Test**
-- Teacher: dashboard → course → Start Class → QR
-- Student: scan → form → name/regNo → Submit
-- Teacher: sees list
-
-**5. Restart** `taskkill /f /im node.exe && cd "academia 2/backend" && node index.js`
-
-**Ready for Step 2 edits?**
+## DEPLOY:
+```
+git add .
+git commit -m "Fix admin enrollments 500"
+git push
+Render auto-deploys
+```
 

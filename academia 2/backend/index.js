@@ -30,6 +30,10 @@ app.use(express.static(path.join(process.cwd(), 'frontend')));
 // Serve from academia 2/frontend for Render
 app.use(express.static(path.join(process.cwd(), 'academia 2/frontend')));
 
+// Live Classes Routes
+const liveClassesRoutes = require('./routes/liveclasses');
+app.use('/api/live-class', liveClassesRoutes);
+
 
 // API Routes
 app.use('/api/auth', authRoutes);

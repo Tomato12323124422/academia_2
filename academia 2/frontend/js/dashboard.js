@@ -226,27 +226,35 @@ async function loadStudentAttendanceHistory() {
 
 async function loadStudentLiveClasses() {
     try {
-        const res = await fetch(`${API}/attendance/active-sessions`, {
+        const res = await fetch(`${API}/live-class/upcoming`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
         const data = await res.json();
         const container = document.getElementById("studentLiveClasses");
         
-        if (res.ok && data.sessions && data.sessions.length > 0) {
-            container.innerHTML = data.sessions.slice(0, 5).map(session => {
-                const startTime = session.start_time || session.date;
+        if (res.ok && data.liveClasses && data.liveClasses.length > 0) {
+            container.innerHTML = data.liveClasses.map(liveClass => {
+                const scheduled = new Date(liveClass.scheduled_at).toLocaleString();
+                const now = new Date();
+                const isLive = new Date(liveClass.scheduled_at) < now;
                 return `
-                <div class="live-class-item live-now">
+                <div class="live-class-item ${isLive ? 'live-now' : ''}">
                     <div class="live-class-info">
-                        <h4>${session.course?.title || 'Unknown Course'}</h4>
-                        <p>Started: ${startTime ? new Date(startTime).toLocaleString() : '-'}</p>
+                        <h4>${liveClass.course.title}</h4>
+                        <p>${liveClass.title}</p>
+                        <p>Scheduled: ${scheduled}</p>
                     </div>
-                    <div><span class="live-badge">LIVE NOW</span></div>
+                    <div>
+                        <a href="${liveClass.zoom_link}" target="_blank" class="join-btn" style="${isLive ? '' : 'opacity: 0.5; pointer-events: none;'}">
+                            ${isLive ? 'Join Live' : 'Not Started'}
+                        </a>
+                    </div>
                 </div>
-            `}).join('');
+                `;
+            }).join('');
         } else {
-            container.innerHTML = "<p>No live classes at the moment.</p>";
+            container.innerHTML = "<p>No upcoming live classes.</p>";
         }
         
     } catch (err) {

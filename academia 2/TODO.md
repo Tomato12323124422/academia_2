@@ -1,25 +1,34 @@
-# ACADEMIA LMS - Task Tracker
+# Admin Dashboard Enrollments Fix - Render 500 Issue
 
-## CURRENT TASK: Fix Admin Dashboard Enrollments (500 Error)
+## Plan Status
+- [x] 1. Analysis: Local F12 no errors, Supabase enrollments ✓, Render logs clean
+- [x] 2. Files read: admin.js, admin-dashboard.js, package.json, index.js, db.js, auth.js
+- [ ] 3. Edit db.js: Fix dotenv path Render-safe
+- [ ] 4. Edit render.yaml: PORT $PORT dynamic
+- [ ] 5. Test local → Git push → Render redeploy
+- [ ] 6. Verify /api/admin/enrollments logs + data
 
-### Approved Plan Steps:
-- [ ] 1. Simplify backend/routes/admin.js GET /enrollments → raw enrollments no joins
-- [ ] 2. Add console.log('ENROLLMENTS:', data) all responses
-- [ ] 3. Frontend admin-dashboard.js → handle empty/null gracefully
-- [ ] 4. Test local → localhost:5000/api/admin/enrollments
-- [ ] 5. Git commit → Render deploy
-- [ ] 6. Verify admin → Enrollments tab loads
+## Root Cause
+- Local: Works (no F12 errors)
+- Render: No request logs → Env vars fail → auth fail → Supabase undefined
+- db.js: dotenv('../.env') → backend/.env not exist on Render
+- render.yaml: PORT 10000 → Backend 5000 conflict
 
-### PREV TASKS (QR Fixed):
-- [x] Fix UUID '38' → parseInt(session_id)
-- [x] QR → attendance-form.html redirect
-- [x] Teacher list: Name + RegNo ✓
+## Render Env Check
+1. Render dashboard → Environment → SUPABASE_URL/KEY/JWT_SECRET ✓
+2. Logs → No "injecting env" → Vars missing
 
-## DEPLOY:
+## Fixes
 ```
-git add .
-git commit -m "Fix admin enrollments 500"
-git push
-Render auto-deploys
+db.js:
+require('dotenv').config(); // No path
+
+render.yaml:
+- key: PORT  
+  value: $PORT  # Dynamic
+
+admin.js /enrollments: FKey safe ✓ logging ✓
 ```
+
+**Current:** 2/6 → Ready edits + deploy!
 

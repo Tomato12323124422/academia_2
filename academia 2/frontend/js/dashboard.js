@@ -1300,16 +1300,19 @@ async function refreshAttendance() {
             const attendanceList = document.getElementById("attendanceList");
 
             if (data.attendance && data.attendance.length > 0) {
-                attendanceList.innerHTML = data.attendance.map(record => `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${record.student?.full_name || record.name || 'Unknown'}</strong>
-                            ${record.reg_no ? `<small style="color: #666; font-size: 12px; display: block;">Reg: ${record.reg_no}</small>` : ''}
+                attendanceList.innerHTML = data.attendance.map(record => {
+                    const scanTime = new Date(record.marked_at).toLocaleString();
+                    return `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${record.student?.full_name || record.name || 'Unknown'}</strong>
+                                ${record.reg_no ? `<small style="color: #666; font-size: 12px; display: block;">Reg: ${record.reg_no}</small>` : ''}
+                                <small style="color: #888; font-size: 11px; display: block;">Scanned: ${scanTime}</small>
+                            </div>
+                            <span style="color: #28a745; font-weight: bold;">✓ Present</span>
                         </div>
-                        <span style="color: #28a745; font-weight: bold;">✓ Present</span>
-                    </div>
-                `).join('');
-
+                    `;
+                }).join('');
 
             } else {
                 attendanceList.innerHTML = "<p>No students have marked attendance yet.</p>";

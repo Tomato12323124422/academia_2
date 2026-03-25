@@ -334,10 +334,7 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
         
         let query = supabase
             .from('enrollments')
-            .select(`
-                *,
-                course:courses(id, title, teacher_id)
-            `)
+            .select('*')
             .order('enrolled_at', { ascending: false });
 
         if (course_id) query = query.eq('course_id', course_id);
@@ -350,27 +347,39 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
         
         if (error) {
             console.error('Supabase enrollments error:', error);
-            return res.status(500).json({ message: error.message, details: error });
+            return res.status(500).json({ message: error.message });
         }
         
-        // Manual student lookup
+// Manual course + student lookup
+        const courseIds = enrollments?.map(e => e.course_id) || [];
         const studentIds = enrollments?.map(e => e.student_id) || [];
-        let students = [];
+        
+        let courses = [], students = [];
+        
+        if (courseIds.length > 0) {
+            const { data: courseData, error: courseError } = await supabase
+                .from('courses')
+                .select('id, title, teacher_id')
+                .in('id', courseIds);
+            if (!courseError) courses = courseData || [];
+        }
+        
         if (studentIds.length > 0) {
             const { data: studentData, error: studentError } = await supabase
                 .from('users')
                 .select('id, full_name, email')
                 .in('id', studentIds);
-            if (!studentError) {
-                students = studentData || [];
-            }
+            if (!studentError) students = studentData || [];
         }
         
+        const courseMap = {};
+        courses.forEach(c => courseMap[c.id] = c);
         const studentMap = {};
         students.forEach(s => studentMap[s.id] = s);
         
         const formattedEnrollments = enrollments.map(e => ({
             ...e,
+            course: courseMap[e.course_id] || null,
             student: studentMap[e.student_id] || null
         }));
 
@@ -380,8 +389,8 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
         }
 
         res.json({ 
-            enrollments: formattedEnrollments || [], 
-            count: formattedEnrollments ? formattedEnrollments.length : 0 
+            enrollments: formattedEnrollments, 
+            count: formattedEnrollments.length 
         });
 
     } catch (err) {

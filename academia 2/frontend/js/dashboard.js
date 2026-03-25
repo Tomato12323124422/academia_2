@@ -518,80 +518,97 @@ async function loadInstructorAnalytics() {
     }
 }
 
+
 async function loadInstructorLiveClasses() {
+    // Load teacher's courses for dropdown
     try {
-        const res = await fetch(`${API}/courses/my-courses`, {
+        const coursesRes = await fetch(`${API}/courses/my-courses`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
-        
+        const coursesData = await coursesRes.json();
+        const courseSelect = document.getElementById("liveCourseSelect");
+        courseSelect.innerHTML = '<option value="">Select course...</option>' + coursesData.courses.map(course => 
+            `<option value="${course.id}">${course.title}</option>`
+        ).join('');
+    } catch (err) {
+        console.error('Error loading courses:', err);
+    }
+
+    // Load scheduled classes
+    try {
+        const res = await fetch(`${API}/live-class/upcoming`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
         const data = await res.json();
-        const container = document.getElementById("instructorLiveClasses");
+        const container = document.getElementById("scheduledClassesList");
         
-        if (res.ok && data.courses && data.courses.length > 0) {
-            const allSessions = [];
-            
-            for (const course of data.courses) {
-                try {
-                    const sessionsRes = await fetch(`${API}/attendance/courses/${course.id}/sessions`, {
-                        headers: { "Authorization": `Bearer ${token}` }
-                    });
-                    const sessionsData = await sessionsRes.json();
-                    
-                    if (sessionsData.sessions) {
-                        sessionsData.sessions.forEach(session => {
-                            allSessions.push({ ...session, courseTitle: course.title });
-                        });
-                    }
-                } catch (e) {
-                    console.error("Error loading sessions for course:", course.id);
-                }
-            }
-            
-            allSessions.sort((a, b) => {
-                const timeA = a.start_time || a.date;
-                const timeB = b.start_time || b.date;
-                return new Date(timeB) - new Date(timeA);
-            });
-            
-            if (allSessions.length > 0) {
-                container.innerHTML = allSessions.slice(0, 10).map(session => {
-                    const startTime = session.start_time || session.date;
-                    const endTime = session.end_time;
-                    
-                    let timeDisplay = '';
-                    if (endTime) {
-                        const startDate = new Date(startTime);
-                        const endDate = new Date(endTime);
-                        timeDisplay = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()}`;
-                    } else {
-                        timeDisplay = new Date(startTime).toLocaleString();
-                    }
-                    
-                    return `
-                    <div class="session-item ${!endTime && session.status === 'active' ? 'live-now' : ''}">
-                        <div class="session-info">
-                            <h4>${session.courseTitle}</h4>
-                            <p>${timeDisplay}</p>
+        if (res.ok && data.liveClasses && data.liveClasses.length > 0) {
+            container.innerHTML = data.liveClasses.map(cls => {
+                const scheduled = new Date(cls.scheduled_at).toLocaleString();
+                return `
+                    <div class="deadline-item">
+                        <div class="deadline-info">
+                            <h4>${cls.course.title} - ${cls.title}</h4>
+                            <p>${scheduled}</p>
                         </div>
-                        <div>
-                            <span class="status-badge ${!endTime && session.status === 'active' ? 'status-active' : 'status-ended'}">
-                                ${!endTime && session.status === 'active' ? 'LIVE NOW' : 'ENDED'}
-                            </span>
+                        <div class="deadline-date">
+                            <a href="${cls.zoom_link}" target="_blank" class="join-btn">Zoom Link</a>
                         </div>
                     </div>
-                `}).join('');
-            } else {
-                container.innerHTML = "<p>No sessions yet. Start a class from your courses!</p>";
-            }
+                `;
+            }).join('');
         } else {
-            container.innerHTML = "<p>No courses to show sessions for.</p>";
+            container.innerHTML = "<p>No scheduled classes yet.</p>";
         }
-        
     } catch (err) {
-        console.error("Error loading live classes:", err);
-        document.getElementById("instructorLiveClasses").innerHTML = "<p>Error loading live classes.</p>";
+        console.error("Error loading scheduled classes:", err);
+        document.getElementById("scheduledClassesList").innerHTML = "<p>Error loading classes.</p>";
     }
 }
+
+// Live class form handler
+document.getElementById('liveClassForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const course_id = document.getElementById('liveCourseSelect').value;
+    const title = document.getElementById('liveClassTitle').value;
+    const zoom_link = document.getElementById('liveZoomLink').value;
+    const scheduled_at = document.getElementById('liveScheduledAt').value;
+    
+    if (!course_id || !title || !zoom_link || !scheduled_at) {
+        alert('Please fill all fields');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/live-class`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                course_id,
+                title,
+                zoom_link,
+                scheduled_at
+            })
+        });
+
+        if (res.ok) {
+            alert('Live class scheduled successfully!');
+            document.getElementById('liveClassForm').reset();
+            loadInstructorLiveClasses(); // Reload list
+        } else {
+            const error = await res.json();
+            alert('Error: ' + error.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Network error. Please try again.');
+    }
+});
+
 
 async function loadInstructorLeaderboard() {
     try {

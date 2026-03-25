@@ -139,13 +139,36 @@
             </div>
         </section>
 
+
         <!-- Live Class Scheduling - Instructor -->
         <section class="panel" id="instructorLiveClassesPanel" style="display: none;">
-            <h3>📹 Live Class Scheduling</h3>
-            <div id="instructorLiveClasses">
-                <p>Loading live classes...</p>
+            <h3>📹 Schedule Live Class</h3>
+            <form id="liveClassForm">
+                <div class="form-group">
+                    <label>Class Title</label>
+                    <input type="text" id="liveClassTitle" placeholder="e.g., Math Lecture #5" required>
+                </div>
+                <div class="form-group">
+                    <label>Zoom Link</label>
+                    <input type="url" id="liveZoomLink" placeholder="https://zoom.us/j/123456789" required>
+                </div>
+                <div class="form-group">
+                    <label>Scheduled Time</label>
+                    <input type="datetime-local" id="liveScheduledAt" required>
+                </div>
+                <div class="form-group">
+                    <label>Course</label>
+                    <select id="liveCourseSelect">
+                        <option value="">Select course...</option>
+                    </select>
+                </div>
+                <button type="submit" class="primary-btn">Schedule Class</button>
+            </form>
+            <div id="scheduledClassesList" style="margin-top: 30px;">
+                <p>Loading scheduled classes...</p>
             </div>
         </section>
+
 
         <!-- Student Leaderboard - Instructor -->
         <section class="panel" id="instructorLeaderboardPanel" style="display: none;">

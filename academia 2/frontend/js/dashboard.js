@@ -1,3 +1,32 @@
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+  navigator.serviceWorker.register('/frontend/sw.js')
+    .then(reg => console.log('SW registered:', reg))
+    .catch(err => console.log('SW registration failed:', err));
+}
+
+// Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Optionally show install button
+  const installBtn = document.querySelector('.install-btn');
+  if (installBtn) installBtn.style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('PWA installed');
+  deferredPrompt = null;
+});
+
+// Offline detection
+window.addEventListener('online', () => console.log('Back online'));
+window.addEventListener('offline', () => {
+  document.body.classList.add('offline');
+  // Show offline notice if needed
+});
+
 // Use local server for development, or production URL
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'http://localhost:5000' 

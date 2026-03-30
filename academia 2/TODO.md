@@ -1,34 +1,21 @@
-# Admin Dashboard Enrollments Fix - Render 500 Issue
+# PWA Conversion TODO
+## [x] 1. Create TODO.md with plan breakdown (done)
 
-## Plan Status
-- [x] 1. Analysis: Local F12 no errors, Supabase enrollments ✓, Render logs clean
-- [x] 2. Files read: admin.js, admin-dashboard.js, package.json, index.js, db.js, auth.js
-- [ ] 3. Edit db.js: Fix dotenv path Render-safe
-- [ ] 4. Edit render.yaml: PORT $PORT dynamic
-- [ ] 5. Test local → Git push → Render redeploy
-- [ ] 6. Verify /api/admin/enrollments logs + data
+## [x] 2. Create PWA files
+- [x] Create frontend/manifest.json
+- [x] Create frontend/sw.js
 
-## Root Cause
-- Local: Works (no F12 errors)
-- Render: No request logs → Env vars fail → auth fail → Supabase undefined
-- db.js: dotenv('../.env') → backend/.env not exist on Render
-- render.yaml: PORT 10000 → Backend 5000 conflict
+## [x] 3. Update HTML files
+- [x] Add manifest link & meta tags to index.html, login.html, dashboard.html
 
-## Render Env Check
-1. Render dashboard → Environment → SUPABASE_URL/KEY/JWT_SECRET ✓
-2. Logs → No "injecting env" → Vars missing
+## [x] 4. Update JS files
+- [x] Register SW in js/dashboard.js
+- [x] Register SW in js/auth.js
 
-## Fixes
-```
-db.js:
-require('dotenv').config(); // No path
+## [x] 5. Generate icons (if needed)
+- Used existing assets/logo.png (covers PWA sizes)
 
-render.yaml:
-- key: PORT  
-  value: $PORT  # Dynamic
+## [ ] 6. Test PWA locally (Lighthouse, DevTools)
 
-admin.js /enrollments: FKey safe ✓ logging ✓
-```
-
-**Current:** 2/6 → Ready edits + deploy!
+## [ ] 7. attempt_completion
 

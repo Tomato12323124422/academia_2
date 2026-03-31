@@ -120,10 +120,6 @@ async function loadStudentStats() {
             document.getElementById("attendance").innerText = rate + "%";
         }
         
-        // Gamification removed for student dashboard
-        document.getElementById("xp").innerText = "-";
-        document.getElementById("badges").innerText = "-";
-        
     } catch (err) {
         console.error("Error loading student stats:", err);
     }
@@ -475,8 +471,6 @@ async function loadInstructorStats() {
             document.getElementById("courseCount").innerText = data.courses?.length || 0;
         }
         
-        document.getElementById("xp").innerText = "-";
-        document.getElementById("badges").innerText = "-";
         document.getElementById("attendance").innerText = "-";
         
     } catch (err) {

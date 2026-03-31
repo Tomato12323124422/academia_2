@@ -278,37 +278,7 @@ async function loadStudentLiveClasses() {
     }
 }
 
-async function loadStudentLeaderboard() {
-    try {
-        const res = await fetch(`${API}/gamification/leaderboard`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
-        const container = document.getElementById("leaderboardBody");
-        
-        if (res.ok && data.leaderboard && data.leaderboard.length > 0) {
-            container.innerHTML = data.leaderboard.slice(0, 10).map((entry, index) => {
-                const rankClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '';
-                const level = Math.floor(Math.sqrt(entry.xp / 100)) + 1;
-                return `
-                    <tr class="${rankClass}">
-                        <td>${index + 1}</td>
-                        <td>${entry.user?.full_name || 'Unknown'}</td>
-                        <td>${entry.xp}</td>
-                        <td>${level}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            container.innerHTML = "<tr><td colspan='4'>No leaderboard data yet.</td></tr>";
-        }
-        
-    } catch (err) {
-        console.error("Error loading leaderboard:", err);
-        document.getElementById("leaderboardBody").innerHTML = "<tr><td colspan='4'>Error loading leaderboard.</td></tr>";
-    }
-}
+// async function loadStudentLeaderboard() { ... } // Removed gamification
 
 function showStudentDashboard() {
     loadStudentDashboard();
@@ -338,11 +308,7 @@ function showStudentLiveClasses() {
     loadStudentLiveClasses();
 }
 
-function showStudentLeaderboard() {
-    hideAllPanels();
-    document.getElementById("studentLeaderboardPanel").style.display = "block";
-    loadStudentLeaderboard();
-}
+// function showStudentLeaderboard() { ... } // Removed gamification
 
 /* ===== BROWSE COURSES FUNCTIONS ===== */
 
@@ -689,7 +655,7 @@ async function loadGuardianDashboard() {
     document.getElementById("guardianGradesPanel").style.display = "block";
     document.getElementById("guardianAttendancePanel").style.display = "block";
     document.getElementById("guardianAssignmentsPanel").style.display = "block";
-    document.getElementById("guardianAchievementsPanel").style.display = "block";
+    // document.getElementById("guardianAchievementsPanel").style.display = "block";
     
     await loadGuardianChildren();
 }
@@ -990,57 +956,10 @@ async function loadGuardianAssignments(childId) {
 
 async function loadGuardianAchievements(childId) {
     try {
-        const res = await fetch(`${API}/guardian/child/${childId}/achievements`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
         const container = document.getElementById("guardianAchievements");
-        
-        if (res.ok) {
-            const stats = data.stats;
-            
-            container.innerHTML = `
-                <div class="analytics-card" style="margin-bottom: 20px;">
-                    <h4>XP & Level</h4>
-                    <div class="analytics-stats">
-                        <div class="stat">
-                            <span class="stat-value">${stats.xp}</span>
-                            <span class="stat-label">XP</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-value">${stats.level}</span>
-                            <span class="stat-label">Level</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-value">${stats.streak_days}</span>
-                            <span class="stat-label">Day Streak</span>
-                        </div>
-                    </div>
-                </div>
-                <h4 style="margin: 15px 0;">Badges Earned</h4>
-            `;
-            
-            if (data.achievements && data.achievements.length > 0) {
-                container.innerHTML += data.achievements.map(achievement => `
-                    <div class="achievement-badge">
-                        <span class="icon">🏆</span>
-                        <div>
-                            <div class="name">${achievement.name}</div>
-                            <div class="desc">${achievement.description}</div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML += "<p>No badges earned yet.</p>";
-            }
-        } else {
-            container.innerHTML = "<p>No achievements data available.</p>";
-        }
-        
+        container.innerHTML = "<p>Gamification features removed.</p>";
     } catch (err) {
-        console.error("Error loading achievements:", err);
-        document.getElementById("guardianAchievements").innerHTML = "<p>Error loading achievements.</p>";
+        console.error("Error:", err);
     }
 }
 
@@ -1077,7 +996,7 @@ function hideAllPanels() {
     document.getElementById("guardianGradesPanel").style.display = "none";
     document.getElementById("guardianAttendancePanel").style.display = "none";
     document.getElementById("guardianAssignmentsPanel").style.display = "none";
-    document.getElementById("guardianAchievementsPanel").style.display = "none";
+    // document.getElementById("guardianAchievementsPanel").style.display = "none";
 }
 
 function logout() {

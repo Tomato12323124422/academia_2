@@ -63,6 +63,7 @@ if (user.role === "teacher") {
         <li onclick="showCreateCourseForm()">➕ Create Course</li>
         <li onclick="showMyCourses()">📚 My Courses</li>
         <li onclick="showInstructorLiveClasses()">📹 Live Classes</li>
+        <li onclick="showTeacherAssignments()">📝 Assignments</li>
         <li onclick="showInstructorAnalytics()">📈 Analytics</li>
         <li onclick="showTeacherSessionPanel()">📱 Attendance QR</li>
         <li onclick="window.location.href='students.html'">👨‍🎓 Students</li>
@@ -609,6 +610,10 @@ function showInstructorLiveClasses() {
     loadInstructorLiveClasses();
 }
 
+function showTeacherAssignments() {
+    window.location.href = 'dashboard-teacher-assignments.html';
+}
+
 // Gamification removed
 function showInstructorLeaderboard() {
     hideAllPanels();
@@ -970,6 +975,10 @@ function hideAllPanels() {
     document.getElementById("guardianAttendancePanel").style.display = "none";
     document.getElementById("guardianAssignmentsPanel").style.display = "none";
     // document.getElementById("guardianAchievementsPanel").style.display = "none";
+}
+
+function showTeacherAssignments() {
+    window.location.href = 'dashboard-teacher-assignments.html';
 }
 
 function logout() {

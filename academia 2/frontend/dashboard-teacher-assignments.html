@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Assignments - ACADEMIA LMS</title>
+    <link rel="stylesheet" href="CSS/dashboard.css">
+    <style>
+        .assignments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .assignment-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary);
+        }
+        .assignment-card h3 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+        .assignment-card p {
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+        .course-select-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .btn-create {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 10px;
+        }
+        .btn-view {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .secondary-btn {
+            background: #f1f5f9;
+            color: var(--dark);
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 8px;
+        }
+        .no-assignments {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+        }
+        .no-assignments h3 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-box">
+                <img src="assets/logo.png" alt="Logo" class="logo">
+                <h3>ACADEMIA LMS</h3>
+            </div>
+            <ul id="menu">
+                <li onclick="window.history.back()">← Back to Dashboard</li>
+            </ul>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <h2 id="pageTitle">📝 Assignments Management</h2>
+                <button onclick="logout()" class="logout">Logout</button>
+            </header>
+
+            <!-- Course Selector -->
+            <div class="course-select-container">
+                <h3>Select Course</h3>
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <select id="courseSelect" style="flex: 1; min-width: 300px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <option value="">Choose a course...</option>
+                    </select>
+                    <button class="btn-create" onclick="loadTeacherAssignments()">Load Assignments</button>
+                    <button class="btn-create" onclick="createAssignment(document.getElementById('courseSelect').value)">➕ Create Assignment</button>
+                </div>
+            </div>
+
+            <!-- Assignments List -->
+            <div id="assignmentsContainer">
+                <div class="no-assignments">
+                    <h3>No Course Selected</h3>
+                    <p>Select a course from the dropdown above to view and manage assignments.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global vars
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : 'https://academia-2-xgdr.onrender.com';
+        const API = `${API_BASE}/api`;
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!token || !user || user.role !== 'teacher') {
+            window.location.href = 'login.html';
+        }
+
+        // Load teacher's courses
+        async function loadCourses() {
+            try {
+                const res = await fetch(`${API}/courses/my-courses`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (res.ok && data.courses) {
+                    const select = document.getElementById('courseSelect');
+                    select.innerHTML = '<option value="">Choose a course...</option>' + 
+                        data.courses.map(course => `<option value="${course.id}">${course.title}</option>`).join('');
+                }
+            } catch (err) {
+                console.error('Error loading courses:', err);
+            }
+        }
+
+        // Load assignments for selected course
+        async function loadTeacherAssignments() {
+            const courseId = document.getElementById('courseSelect').value;
+            if (!courseId) return;
+
+            document.getElementById('pageTitle').textContent = '📝 Assignments - Loading...';
+            
+            try {
+                const res = await fetch(`${API}/assignments/course/${courseId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                const container = document.getElementById('assignmentsContainer');
+                
+                if (res.ok) {
+                    document.getElementById('pageTitle').textContent = '📝 Assignments Management';
+                    
+                    if (data.assignments && data.assignments.length > 0) {
+                        container.innerHTML = `
+                            <h3>Assignments for this course (${data.assignments.length})</h3>
+                            <div class="assignments-grid">
+                                ${data.assignments.map(assignment => `
+                                    <div class="assignment-card">
+                                        <h3>${assignment.title}</h3>
+                                        <p>${assignment.description}</p>
+                                        <p><strong>Due:</strong> ${assignment.due_date ? new Date(assignment.due_date).toLocaleString() : 'No deadline'}</p>
+                                        <p><strong>Points:</strong> ${assignment.points || 0}</p>
+                                        <div style="margin-top: 15px;">
+                                            <button onclick="viewSubmissions('${assignment.id}')" class="btn-view">View Submissions (${assignment.submission_count || 0})</button>
+                                            <button onclick="editAssignment('${assignment.id}')" class="secondary-btn">Edit</button>
+                                            <button onclick="deleteAssignment('${assignment.id}')" class="secondary-btn" style="background: #dc3545; color: white;">Delete</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = `
+                            <div class="no-assignments">
+                                <h3>No Assignments Yet</h3>
+                                <p>Create your first assignment for this course!</p>
+                                <button class="btn-create" onclick="createAssignment('${courseId}')">➕ Create Assignment</button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    container.innerHTML = `<div class="no-assignments"><h3>Error</h3><p>${data.message || 'Failed to load assignments'}</p></div>`;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('assignmentsContainer').innerHTML = '<div class="no-assignments"><h3>Error</h3><p>Network error loading assignments.</p></div>';
+            }
+        }
+
+        // Quick create assignment
+        async function createAssignment(courseId) {
+            if (!courseId) {
+                alert('Please select a course first');
+                return;
+            }
+
+            const title = prompt('Assignment Title:');
+            if (!title) return;
+
+            const description = prompt('Description:');
+            if (!description) return;
+
+            const dueDate = prompt('Due Date (YYYY-MM-DD HH:MM, optional):') || '';
+            const points = prompt('Points (default 100):') || 100;
+
+            try {
+                const res = await fetch(`${API}/assignments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        course_id: courseId,
+                        title,
+                        description,
+                        due_date: dueDate,
+                        points: parseInt(points)
+                    })
+                });
+
+                if (res.ok) {
+                    alert('Assignment created successfully!');
+                    loadTeacherAssignments();
+                } else {
+                    const error = await res.json();
+                    alert('Error: ' + (error.message || 'Failed to create assignment'));
+                }
+            } catch (err) {
+                alert('Network error');
+            }
+        }
+
+        // View submissions (opens assignments.html in new tab)
+        function viewSubmissions(assignmentId) {
+            window.open(`assignments.html?view_submissions=${assignmentId}&teacher_mode=true`, '_blank');
+        }
+
+        // Edit assignment (simple for now)
+        function editAssignment(assignmentId) {
+            alert('Edit feature coming soon! (ID: ' + assignmentId + ')');
+        }
+
+        // Delete assignment
+        async function deleteAssignment(assignmentId) {
+            if (!confirm('Delete this assignment? All submissions will be lost.')) return;
+
+            try {
+                const res = await fetch(`${API}/assignments/${assignmentId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    alert('Assignment deleted!');
+                    loadTeacherAssignments();
+                } else {
+                    const error = await res.json();
+                    alert('Error: ' + (error.message || 'Failed to delete'));
+                }
+            } catch (err) {
+                alert('Network error');
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Load courses on page load
+        window.onload = function() {
+            loadCourses();
+        };
+    </script>
+</body>
+</html>
+

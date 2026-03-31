@@ -98,6 +98,7 @@ async function loadStudentDashboard() {
 }
 
 
+
 async function loadStudentStats() {
     try {
         const coursesRes = await fetch(`${API}/courses/enrolled`, {
@@ -448,7 +449,6 @@ async function loadInstructorDashboard() {
     
     document.getElementById("instructorAnalyticsPanel").style.display = "block";
     document.getElementById("instructorLiveClassesPanel").style.display = "block";
-    document.getElementById("instructorLeaderboardPanel").style.display = "block";
     document.getElementById("teacherSessionPanel").style.display = "block";
     document.getElementById("attendanceListPanel").style.display = "block";
     document.getElementById("myCoursesPanel").style.display = "block";
@@ -458,10 +458,10 @@ async function loadInstructorDashboard() {
         loadMyCourses(),
         loadInstructorAnalytics(),
         loadInstructorLiveClasses(),
-        loadInstructorLeaderboard(),
         checkActiveSession()
     ]);
 }
+
 
 async function loadInstructorStats() {
     try {
@@ -813,10 +813,10 @@ async function selectChild(childId, childName) {
         loadGuardianCourses(childId),
         loadGuardianGrades(childId),
         loadGuardianAttendance(childId),
-        loadGuardianAssignments(childId),
-        loadGuardianAchievements(childId)
+        loadGuardianAssignments(childId)
     ]);
 }
+
 
 async function loadGuardianCourses(childId) {
     try {
@@ -1065,14 +1065,12 @@ function hideAllPanels() {
     document.getElementById("studentDeadlinesPanel").style.display = "none";
     document.getElementById("studentAttendanceHistoryPanel").style.display = "none";
     document.getElementById("studentLiveClassesPanel").style.display = "none";
-    document.getElementById("studentLeaderboardPanel").style.display = "none";
     document.getElementById("studentCoursesPanel").style.display = "none";
     document.getElementById("studentAttendancePanel").style.display = "none";
     document.getElementById("browseCoursesPanel").style.display = "none";
 
     document.getElementById("instructorAnalyticsPanel").style.display = "none";
     document.getElementById("instructorLiveClassesPanel").style.display = "none";
-    document.getElementById("instructorLeaderboardPanel").style.display = "none";
     document.getElementById("teacherSessionPanel").style.display = "none";
     document.getElementById("attendanceListPanel").style.display = "none";
     document.getElementById("createCoursePanel").style.display = "none";

@@ -150,7 +150,7 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('assignments')
-.select('*, submissions(count)')
+.select('*')
             .eq('course_id', req.params.courseId)
             .order('due_date', { ascending: true });
 
@@ -159,9 +159,28 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
         }
 
         // Add submission count to each assignment
+        // Get submission counts separately for each assignment
+        const assignmentIds = data.map(a => a.id);
+        let submissionCounts = {};
+        
+        if (assignmentIds.length > 0) {
+        const { data: subsCount, count } = await supabase
+                .from('submissions')
+                .select('assignment_id')
+                .in('assignment_id', assignmentIds);
+            
+            submissionCounts = {};
+            assignmentIds.forEach(id => {
+                submissionCounts[id] = 0;
+            });
+            subsCount.forEach(row => {
+                submissionCounts[row.assignment_id] = row.count;
+            });
+        }
+        
         const assignments = data.map(assignment => ({
             ...assignment,
-submission_count: assignment.submissions?.count || 0
+            submission_count: submissionCounts[assignment.id] || 0
         }));
 
         res.json({ assignments });

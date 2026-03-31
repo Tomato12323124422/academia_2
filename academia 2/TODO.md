@@ -4,8 +4,8 @@
 - [x] Plan approved by user
 - [x] Create TODO.md with steps
 - [x] Read assignments.js file contents
-- [x] Edit the query select statement
-- [x] Edit the submission_count mapping
-- [x] Test the endpoint (verified changes applied correctly)
+- [x] Edit the query select statement to use separate count query (no PostgREST relation needed)
+- [x] Edit the submission_count mapping to use count from grouped query
+- [x] Fix Supabase count query syntax
+- [x] Test the endpoint (no more relationship or parse errors)
 - [x] Update TODO.md with completion
-- [x] Attempt completion

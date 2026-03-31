@@ -150,7 +150,7 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('assignments')
-.select('*')
+            .select('*')
             .eq('course_id', req.params.courseId)
             .order('due_date', { ascending: true });
 

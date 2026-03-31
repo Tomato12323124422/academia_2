@@ -247,6 +247,63 @@
             const dueDate = prompt('Due Date (YYYY-MM-DD HH:MM, optional):') || '';
             const points = prompt('Points (default 100):') || 100;
 
+            // File upload
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.jpeg';
+            fileInput.onchange = async () => {
+                if (fileInput.files[0]) {
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+
+                    try {
+                        const uploadRes = await fetch(`${API}/upload/assignment/${courseId}/attachment`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+
+                        if (uploadRes.ok) {
+                            const uploadData = await uploadRes.json();
+                            alert('Attachment uploaded! Creating assignment...');
+                        }
+                    } catch (err) {
+                        alert('Upload failed, creating without attachment');
+                    }
+                }
+            };
+            fileInput.click();
+
+            setTimeout(async () => {
+                // Create assignment (with or without attachment)
+                try {
+                    const res = await fetch(`${API}/assignments`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            course_id: courseId,
+                            title,
+                            description: instructions,
+                            due_date: dueDate,
+                            points: parseInt(points)
+                        })
+                    });
+
+                    if (res.ok) {
+                        alert('Assignment created successfully!');
+                        loadTeacherAssignments();
+                    } else {
+                        const error = await res.json();
+                        alert('Error: ' + (error.message || 'Failed to create assignment'));
+                    }
+                } catch (err) {
+                    alert('Network error');
+                }
+            }, 1000);
+
             try {
                 const res = await fetch(`${API}/assignments`, {
                     method: 'POST',

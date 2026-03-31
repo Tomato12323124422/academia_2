@@ -44,6 +44,7 @@ app.use('/api/grades', gradesRoutes);
 app.use('/api/gamification', gamificationRoutes);
 app.use('/api/guardian', guardianRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/upload', require('./routes/upload'));
 
 
 // Health check endpoint

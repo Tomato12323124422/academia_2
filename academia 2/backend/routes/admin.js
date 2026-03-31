@@ -342,51 +342,37 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
 
         const { data: enrollments, error } = await query;
         
-        console.log('Enrollments data:', enrollments ? enrollments.length : 0);
-        console.log('Error:', error);
+        console.log('Enrollments query result:', { count: enrollments?.length || 0, error: error?.message });
         
         if (error) {
             console.error('Supabase enrollments error:', error);
-            return res.status(500).json({ message: error.message });
+            return res.status(500).json({ message: 'Enrollments query failed', error: error.message, code: error.code });
         }
         
+        if (!enrollments || enrollments.length === 0) {
+            return res.json({ enrollments: [], count: 0, message: 'No enrollments found' });
+        }
+
 // Manual course + student lookup
-        const courseIds = enrollments?.map(e => e.course_id) || [];
-        const studentIds = enrollments?.map(e => e.student_id) || [];
+        const courseIds = enrollments.map(e => e.course_id);
+        const studentIds = enrollments.map(e => e.student_id);
         
-        let courses = [], students = [];
+        const coursePromise = supabase.from('courses').select('id, title, teacher_id').in('id', courseIds);
+        const studentPromise = supabase.from('users').select('id, full_name, email').in('id', studentIds);
         
-        if (courseIds.length > 0) {
-            const { data: courseData, error: courseError } = await supabase
-                .from('courses')
-                .select('id, title, teacher_id')
-                .in('id', courseIds);
-            if (!courseError) courses = courseData || [];
-        }
-        
-        if (studentIds.length > 0) {
-            const { data: studentData, error: studentError } = await supabase
-                .from('users')
-                .select('id, full_name, email')
-                .in('id', studentIds);
-            if (!studentError) students = studentData || [];
-        }
+        const [courseResult, studentResult] = await Promise.all([coursePromise, studentPromise]);
         
         const courseMap = {};
-        courses.forEach(c => courseMap[c.id] = c);
+        courseResult.data?.forEach(c => courseMap[c.id] = c);
+        
         const studentMap = {};
-        students.forEach(s => studentMap[s.id] = s);
+        studentResult.data?.forEach(s => studentMap[s.id] = s);
         
         const formattedEnrollments = enrollments.map(e => ({
             ...e,
-            course: courseMap[e.course_id] || null,
-            student: studentMap[e.student_id] || null
+            course: courseMap[e.course_id],
+            student: studentMap[e.student_id]
         }));
-
-        if (error) {
-            console.error('Supabase enrollments error:', error);
-            return res.status(500).json({ message: error.message, details: error });
-        }
 
         res.json({ 
             enrollments: formattedEnrollments, 
@@ -394,10 +380,11 @@ router.get('/enrollments', adminMiddleware, async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Full enrollments endpoint error:', err);
-        res.status(500).json({ message: err.message, stack: err.stack });
+        console.error('Admin /enrollments error:', err);
+        res.status(500).json({ message: 'Server error', details: err.message, stack: err.stack });
     }
 });
+
 
 // MANUALLY ENROLL STUDENT
 router.post('/enrollments', adminMiddleware, async (req, res) => {

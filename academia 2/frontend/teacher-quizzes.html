@@ -4,20 +4,12 @@
     <title>Teacher Quizzes - ACADEMIA LMS</title>
     <link rel="stylesheet" href="CSS/dashboard.css">
     <style>
-        /* Same styles as student quizzes.html */
         .quizzes-grid { display: grid; gap: 20px; padding: 20px 0; }
         .quiz-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #1976d2; }
         .btn-create { background: #4caf50; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .btn-edit, .btn-view { background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 5px; cursor: pointer; }
-        .btn-grade { background: #ff9800; color: white; }
         #courseSelect { padding: 10px; margin-bottom: 20px; }
-        #createQuizModal, #attemptsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        #createQuizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
         .modal-content { background: white; margin: 50px auto; padding: 30px; border-radius: 10px; max-width: 600px; max-height: 80vh; overflow-y: auto; }
-        .question-form { margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
-        .add-question { background: #4caf50; color: white; border: none; padding: 8px 16px; cursor: pointer; margin-top: 10px; }
-        .attempt-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .attempt-table th, .attempt-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        .attempt-table th { background: #f5f5f5; }
     </style>
 </head>
 <body>
@@ -29,107 +21,136 @@
         </div>
         <ul id="menu">
             <li onclick="window.location.href='dashboard.html'">Dashboard</li>
-            <li onclick="window.location.href='my-courses.html'">My Courses</li>
-            <li onclick="window.location.href='courses.html'">Courses</li>
             <li onclick="window.location.href='teacher-assignments.html'">Assignments</li>
             <li onclick="window.location.href='teacher-quizzes.html'" style="background: #e3f2fd;">Quizzes</li>
             <li onclick="window.location.href='attendance-teacher.html'">Attendance</li>
-            <li onclick="window.location.href='grades.html'">Grades</li>
         </ul>
     </aside>
     <main class="main">
         <header class="topbar">
-            <h2 id="welcome">Manage Quizzes</h2>
-            <button onclick="logout()" class="logout">Logout</button>
+            <h2>Manage Quizzes</h2>
+            <button onclick="logout()">Logout</button>
         </header>
         <section class="panel">
             <div style="margin-bottom: 20px;">
-                <select id="courseSelect" onchange="loadTeacherQuizzes()">
+                <select id="courseSelect">
                     <option value="">Select Course</option>
                 </select>
-<button class="btn-create" onclick="openCreateQuizModal()">+ Create Quiz</button>
-<script>
-window.openCreateQuizModal = function() {
-    document.getElementById('createQuizModal').style.display = 'block';
-};
-window.closeCreateQuizModal = function() {
-    document.getElementById('createQuizModal').style.display = 'none';
-};
-window.loadTeacherQuizzes = function() {
-    const courseId = document.getElementById('courseSelect').value;
-    if (courseId) loadQuizzes(courseId); // Calls js func
-};
-</script>
-
+                <button class="btn-create" id="createQuizBtn">+ Create Quiz</button>
             </div>
             <div id="teacherQuizzesList" class="quizzes-grid">
-                <p>Select a course to view quizzes</p>
+                Select course to view quizzes
             </div>
         </section>
     </main>
 </div>
 
-<!-- Create Quiz Modal -->
 <div id="createQuizModal">
     <div class="modal-content">
-        <h3>Create New Quiz</h3>
+        <h3>Create Quiz</h3>
         <form id="quizForm">
-            <input type="hidden" id="editingQuizId">
-            <label>Title: <input type="text" id="quizTitle" required></label>
+            <label>Title: <input id="quizTitle" required></label>
             <label>Description: <textarea id="quizDescription"></textarea></label>
-            <label>Due Date (YYYY-MM-DDTHH:mm): <input type="datetime-local" id="quizDueDate"></label>
-            <label>Time Limit (minutes): <input type="number" id="quizTimeLimit" value="60" min="5"></label>
-            <label>Max Points: <input type="number" id="quizMaxPoints" value="100" min="10"></label>
-            <div id="questionsForm">
-                <h4>Questions</h4>
-                <div class="question-form">
-                    <label>Question 1: <input type="text" name="questionText" required></label>
-                    <label>Type: <select name="type">
-                        <option value="mcq">MCQ</option>
-                        <option value="text">Text</option>
-                    </select></label>
-                    <div class="options-group">
-                        <label>Options (comma separated): <input type="text" name="options" placeholder="A,B,C,D"></label>
-                    </div>
-                    <label>Correct Answer: <input type="text" name="correctAnswer" required></label>
-                    <label>Points: <input type="number" name="points" value="10" min="1"></label>
-                </div>
-            </div>
-            <button type="button" class="add-question" onclick="addQuestion()">+ Add Question</button>
-            <div style="text-align: right; margin-top: 20px;">
-                <button type="button" onclick="closeCreateQuizModal()">Cancel</button>
-                <button type="submit" class="btn-create">Save Quiz</button>
-            </div>
+            <label>Duration (min): <input id="quizDuration" type="number" value="30" required></label>
+            <h4>Questions:</h4>
+            <div id="questionsList"></div>
+            <button type="button" onclick="addQuestion()">Add Question</button>
+            <button type="submit">Save Quiz</button>
+            <button type="button" onclick="closeModal()">Cancel</button>
         </form>
     </div>
 </div>
 
-<!-- Attempts Modal -->
-<div id="attemptsModal">
-    <div class="modal-content">
-        <h3 id="attemptsTitle">Quiz Attempts</h3>
-        <div id="attemptsList"></div>
-        <button onclick="closeAttemptsModal()">Close</button>
-    </div>
-</div>
-
 <script>
-function openCreateQuizModal() {
+const API = 'https://academia-2-xgdr.onrender.com/api';
+const token = localStorage.getItem('token') || '';
+let currentCourseId = '';
+
+function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+document.getElementById('createQuizBtn').onclick = function() {
     document.getElementById('createQuizModal').style.display = 'block';
-    document.getElementById('editingQuizId').value = '';
-    // Clear form...
-    const form = document.getElementById('quizForm');
-    form.reset();
-}
-function closeCreateQuizModal() {
+};
+
+function closeModal() {
     document.getElementById('createQuizModal').style.display = 'none';
 }
-function loadTeacherQuizzes() {
-    alert('Load quizzes for selected course');
+
+function addQuestion() {
+    const list = document.getElementById('questionsList');
+    const div = document.createElement('div');
+    div.innerHTML = `
+        <input placeholder="Question">
+        <input placeholder="Options (A,B,C,D)" >
+        <input placeholder="Correct answer (0,1,2..)" required>
+        <button onclick="this.parentElement.remove()">Remove</button>
+    `;
+    list.appendChild(div.firstChild);
+}
+
+document.getElementById('quizForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const courseSelect = document.getElementById('courseSelect');
+    currentCourseId = courseSelect.value;
+    if (!currentCourseId) return alert('Select course');
+    
+    const title = document.getElementById('quizTitle').value;
+    const description = document.getElementById('quizDescription').value;
+    const duration = document.getElementById('quizDuration').value;
+    
+    // 1. Create quiz
+    let res = await fetch(`${API}/quizzes`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+        body: JSON.stringify({course_id: currentCourseId, title, description, duration: parseInt(duration)})
+    });
+    let data = await res.json();
+    if (!res.ok) return alert(data.error);
+    const quizId = data.quiz.id;
+    
+    // 2. Add questions
+    const qInputs = document.querySelectorAll('#questionsList input');
+    let qCount = 0;
+    for (let i = 0; i < qInputs.length; i += 3) {
+        const question = qInputs[i].value;
+        const options = qInputs[i+1].value.split(',');
+        const correct = qInputs[i+2].value;
+        if (question && correct) {
+            res = await fetch(`${API}/quizzes/${quizId}/questions`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                body: JSON.stringify({question, options, correct_answer: correct})
+            });
+            if (res.ok) qCount++;
+        }
+    }
+    
+    alert(`Quiz saved! ${qCount} questions added.`);
+    closeModal();
+    document.getElementById('courseSelect').onchange();
+};
+
+document.getElementById('courseSelect').onchange = async function() {
+    currentCourseId = this.value;
+    if (!currentCourseId) return;
+    const res = await fetch(`${API}/quizzes/course/${currentCourseId}`, {
+        headers: {'Authorization': `Bearer ${token}`}
+    });
+    const data = await res.json();
+    const list = document.getElementById('teacherQuizzesList');
+    if (data.quizzes) {
+        list.innerHTML = data.quizzes.map(q => `<div class="quiz-card"><h3>${q.title}</h3><p>${q.description}</p><button onclick="viewQuizResults('${q.id}')">Results</button></div>`).join('') || 'No quizzes';
+    }
+};
+
+async function viewQuizResults(quizId) {
+    const res = await fetch(`${API}/quizzes/${quizId}/results`, {
+        headers: {'Authorization': `Bearer ${token}`}
+    });
+    const data = await res.json();
+    alert('Attempts: ' + (data.attempts?.length || 0));
 }
 </script>
-<script src="js/teacher-quizzes.js"></script>
 </body>
 </html>
-
 

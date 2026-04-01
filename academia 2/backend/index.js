@@ -36,6 +36,8 @@ app.use('/api/live-class', liveClassesRoutes);
 
 
 // API Routes
+const quizzesRoutes = require('./routes/quizzes');
+app.use('/api/quizzes', quizzesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/attendance', attendanceRoutes);

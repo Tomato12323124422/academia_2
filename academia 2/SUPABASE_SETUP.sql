@@ -431,7 +431,119 @@ VALUES (
 */
 
 -- ============================================
--- SETUP COMPLETE
+-- 12. QUIZZES TABLES (NEW - ASSESSMENTS)
 -- ============================================
 
-SELECT 'Database setup complete! Tables created:' as status;
+CREATE TABLE IF NOT EXISTS quizzes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    teacher_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    due_date TIMESTAMP,
+    max_points INTEGER DEFAULT 100,
+    time_limit_minutes INTEGER DEFAULT 60,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Teachers can manage their course quizzes" ON quizzes FOR ALL
+    USING (
+        teacher_id = auth.uid() OR 
+        EXISTS (SELECT 1 FROM courses WHERE id = course_id AND teacher_id = auth.uid())
+    );
+
+CREATE POLICY "Students can view quizzes for enrolled courses" ON quizzes FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM enrollments 
+            WHERE course_id = quizzes.course_id AND student_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Admins can view all quizzes" ON quizzes FOR SELECT
+    USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE TABLE IF NOT EXISTS quiz_questions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    type TEXT CHECK (type IN ('mcq', 'text')) DEFAULT 'mcq',
+    options JSONB,
+    correct_answer JSONB NOT NULL,
+    points INTEGER DEFAULT 10,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE quiz_questions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Teachers can manage quiz questions" ON quiz_questions FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM quizzes q JOIN courses c ON q.course_id = c.id
+            WHERE q.id = quiz_questions.quiz_id AND c.teacher_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Students can view questions for enrolled quizzes" ON quiz_questions FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM quizzes q JOIN enrollments e ON q.course_id = e.course_id
+            WHERE q.id = quiz_questions.quiz_id AND e.student_id = auth.uid()
+        )
+    );
+
+CREATE TABLE IF NOT EXISTS quiz_attempts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    answers JSONB DEFAULT '{}',
+    score NUMERIC(5,2),
+    feedback TEXT,
+    num_attempts INTEGER DEFAULT 1,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    status TEXT DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'graded')),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(quiz_id, student_id)
+);
+
+ALTER TABLE quiz_attempts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Students can manage own attempts" ON quiz_attempts FOR ALL
+    USING (student_id = auth.uid());
+
+CREATE POLICY "Teachers can grade attempts for their quizzes" ON quiz_attempts FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM quizzes q JOIN courses c ON q.course_id = c.id
+            WHERE q.id = quiz_attempts.quiz_id AND c.teacher_id = auth.uid()
+        )
+    );
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_quizzes_course ON quizzes(course_id);
+CREATE INDEX IF NOT EXISTS idx_quizzes_teacher ON quizzes(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz ON quiz_questions(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz ON quiz_attempts(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_student ON quiz_attempts(student_id);
+
+-- Triggers for quizzes, questions, attempts
+DROP TRIGGER IF EXISTS update_quizzes_updated_at ON quizzes;
+CREATE TRIGGER update_quizzes_updated_at
+    BEFORE UPDATE ON quizzes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_quiz_attempts_updated_at ON quiz_attempts;
+CREATE TRIGGER update_quiz_attempts_updated_at
+    BEFORE UPDATE ON quiz_attempts
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- SETUP COMPLETE (Quizzes Added!)
+-- ============================================
+
+SELECT 'Database setup complete! Tables created (incl. Quizzes!):' as status;

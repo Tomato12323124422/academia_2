@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quizzes - ACADEMIA LMS</title>
+    <link rel="stylesheet" href="CSS/dashboard.css">
+    <style>
+        .quizzes-grid {
+            display: grid;
+            gap: 20px;
+            padding: 20px 0;
+        }
+        .quiz-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #1976d2;
+        }
+        .quiz-card.pending {
+            border-left-color: #ff9800;
+        }
+        .quiz-card.completed {
+            border-left-color: #4caf50;
+        }
+        .quiz-card.graded {
+            border-left-color: #9c27b0;
+        }
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .quiz-card h3 {
+            margin: 0;
+            color: #333;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-badge.pending { background: #fff3e0; color: #ff9800; }
+        .status-badge.completed { background: #e8f5e9; color: #4caf50; }
+        .status-badge.graded { background: #f3e5f5; color: #9c27b0; }
+        .quiz-meta {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .quiz-meta span { margin-right: 20px; }
+        .due-date { font-weight: bold; }
+        .due-date.overdue { color: #d32f2f; }
+        .time-limit { color: #2196f3; }
+        .btn-start {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-start:hover { background: #45a049; }
+        .btn-view { background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .grade-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .grade-score { font-size: 24px; font-weight: bold; color: #1976d2; }
+        .filter-tabs button.active { background: #1976d2; color: white; }
+        #quizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { background: white; max-width: 800px; margin: 50px auto; padding: 30px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        .question { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .question h4 { margin-bottom: 10px; }
+        .mcq-options label { display: block; margin: 8px 0; cursor: pointer; }
+        .mcq-options input[type="radio"] { margin-right: 10px; }
+        .timer { font-size: 20px; font-weight: bold; color: #ff9800; text-align: center; margin: 20px 0; }
+        .btn-submit-quiz { background: #1976d2; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <aside class="sidebar">
+        <div class="logo-box">
+            <img src="assets/logo.png" class="logo">
+            <h3>ACADEMIA LMS</h3>
+        </div>
+        <ul id="menu">
+            <li onclick="window.location.href='dashboard.html'">Dashboard</li>
+            <li onclick="window.location.href='my-courses.html'">My Courses</li>
+            <li onclick="window.location.href='courses-browse.html'">Browse Courses</li>
+            <li onclick="window.location.href='assignments.html'">Assignments</li>
+            <li onclick="window.location.href='quizzes.html'" style="background: #e3f2fd;">Quizzes</li>
+            <li onclick="window.location.href='grades.html'">Grades</li>
+        </ul>
+    </aside>
+    <main class="main">
+        <header class="topbar">
+            <h2 id="welcome">Quizzes</h2>
+            <button onclick="logout()" class="logout">Logout</button>
+        </header>
+        <div class="filter-tabs">
+            <button onclick="filterQuizzes('all')" class="active" id="tab-all">All</button>
+            <button onclick="filterQuizzes('pending')" id="tab-pending">Pending</button>
+            <button onclick="filterQuizzes('completed')" id="tab-completed">Completed</button>
+            <button onclick="filterQuizzes('graded')" id="tab-graded">Graded</button>
+        </div>
+        <section class="panel">
+            <div id="quizzesList" class="quizzes-grid">
+                <p>Loading quizzes...</p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Quiz Modal -->
+<div id="quizModal">
+    <div class="modal-content">
+        <div class="quiz-header">
+            <h2 id="modalTitle"></h2>
+            <span id="timer" class="timer"></span>
+            <button onclick="closeQuizModal()" style="float: right; background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px;">×</button>
+        </div>
+        <div id="questionsContainer"></div>
+        <button class="btn-submit-quiz" onclick="submitQuiz()">Submit Quiz</button>
+        <input type="hidden" id="currentAttemptId">
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+    const API = "https://academia-2-xgdr.onrender.com/api";
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if (!user || user.role !== 'student') {
+        window.location.href = "login.html";
+    }
+
+    document.getElementById("welcome").innerText = "Quizzes - " + user.full_name;
+    let allQuizzes = [];
+    let currentFilter = 'all';
+    let currentQuiz = null;
+    let timeLeft = 0;
+    let timerInterval;
+
+    // ... (rest of JS logic same as original - loadQuizzes, filterQuizzes, renderQuizzes, startQuiz, loadQuizModal, updateTimer, submitQuiz, closeQuizModal, viewAttempt)
+    // Omitted for brevity in this tool call, but full implementation from previous read_file content
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    async function loadQuizzes() {
+        try {
+            const res = await fetch(`${API}/quizzes/my-quizzes`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.quizzes) {
+                allQuizzes = data.quizzes;
+                renderQuizzes();
+            } else {
+                document.getElementById("quizzesList").innerHTML = "<p>No quizzes found.</p>";
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById("quizzesList").innerHTML = "<p>Error loading quizzes.</p>";
+        }
+    }
+
+    function filterQuizzes(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-tabs button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`tab-${filter}`).classList.add('active');
+        renderQuizzes();
+    }
+
+    function renderQuizzes() {
+        const container = document.getElementById("quizzesList");
+        let filtered = allQuizzes;
+        if (currentFilter === 'pending') filtered = allQuizzes.filter(q => !q.my_attempt || !q.my_attempt.completed_at);
+        else if (currentFilter === 'completed') filtered = allQuizzes.filter(q => q.my_attempt?.completed_at && !q.my_attempt.score);
+        else if (currentFilter === 'graded') filtered = allQuizzes.filter(q => q.my_attempt?.score !== null);
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<p>No ${currentFilter} quizzes found.</p>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(quiz => {
+            const status = quiz.my_attempt?.score !== null ? 'graded' : (quiz.my_attempt?.completed_at ? 'completed' : 'pending');
+            const dueDate = new Date(quiz.due_date);
+            const isOverdue = !quiz.my_attempt?.completed_at && dueDate < new Date();
+            const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            const attemptScore = quiz.my_attempt?.score;
+
+            return `
+                <div class="quiz-card ${status}">
+                    <div class="quiz-header">
+                        <h3>${quiz.title}</h3>
+                        <span class="status-badge ${status}">${isOverdue ? 'Overdue' : statusText}</span>
+                    </div>
+                    <div class="quiz-meta">
+                        <span>Course: ${quiz.course?.title || 'N/A'}</span>
+                        <span>Points: ${quiz.max_points}</span>
+                        <span class="time-limit">Time: ${quiz.time_limit_minutes} min</span>
+                    </div>
+                    <p>${quiz.description || 'No description'}</p>
+                    <p class="due-date ${isOverdue ? 'overdue' : ''}">Due: ${dueDate.toLocaleString()}</p>
+                    ${attemptScore ? `
+                        <div class="grade-info">
+                            <h4>Your Score</h4>
+                            <p class="grade-score">${attemptScore}/${quiz.max_points}</p>
+                        </div>
+                    ` : ''}
+                    ${!quiz.my_attempt?.completed_at ? `
+                        <button class="btn-start" onclick="startQuiz('${quiz.id}')">Start Quiz</button>
+                    ` : `
+                        <button class="btn-view" onclick="viewAttempt('${quiz.id}')">View Attempt</button>
+                    ` }
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function startQuiz(quizId) {
+        try {
+            const res = await fetch(\`${API}/quizzes/\${quizId}/attempt`, {
+                method: 'POST',
+                headers: { "Authorization": \`Bearer \${token}\` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                currentQuiz = allQuizzes.find(q => q.id === quizId);
+                document.getElementById("currentAttemptId").value = data.attempt_id;
+                loadQuizModal();
+                document.getElementById("quizModal").style.display = "block";
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert("Error starting quiz");
+        }
+    }
+
+    async function loadQuizModal() {
+        const res = await fetch(\`${API}/quizzes/course/\${currentQuiz.course_id}`, {
+            headers: { "Authorization": \`Bearer \${token}\` }
+        });
+        const data = await res.json();
+        const quizData = data.quizzes.find(q => q.id === currentQuiz.id);
+        document.getElementById("modalTitle").innerText = quizData.title;
+        timeLeft = quizData.time_limit_minutes * 60;
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+
+        document.getElementById("questionsContainer").innerHTML = quizData.quiz_questions.map((q, index) => {
+            if (q.type === 'mcq') {
+                return \`
+                    <div class="question">
+                        <h4>Q\${index+1} (\${q.points} pts) \${q.question_text}</h4>
+                        <div class="mcq-options">
+                            \${q.options.map((opt, i) => \`
+                                <label><input type="radio" name="q\${index}" value="\${i}"> \${opt}</label>
+                            \`).join('')}
+                        </div>
+                    </div>
+                \`;
+            } else {
+                return \`
+                    <div class="question">
+                        <h4>Q\${index+1} (\${q.points} pts) \${q.question_text}</h4>
+                        <textarea name="q\${index}" rows="4" style="width:100%; padding:10px;" placeholder="Your answer..."></textarea>
+                    </div>
+                \`;
+            }
+        }).join('');
+    }
+
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById("timer").innerText = \`\${minutes}:\${seconds.toString().padStart(2, '0')}\`;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitQuiz(true);
+        } else {
+            timeLeft--;
+        }
+    }
+
+    async function submitQuiz(timeUp = false) {
+        clearInterval(timerInterval);
+        const attemptId = document.getElementById("currentAttemptId").value;
+        let answers = {};
+        document.querySelectorAll('.question').forEach((q, index) => {
+            if (q.querySelector('textarea')) {
+                answers[\`q\${index}\`] = q.querySelector('textarea').value;
+            } else {
+                const selected = q.querySelector('input:checked');
+                answers[\`q\${index}\`] = selected ? selected.value : null;
+            }
+        });
+
+        try {
+            const res = await fetch(\`${API}/quizzes/\${currentQuiz.id}/attempt/\${attemptId}/complete`, {
+                method: 'POST',
+                headers: { 
+                    "Authorization": \`Bearer \${token}\`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(answers)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(\`Quiz submitted! Score: \${data.score}/\${data.max_points}\`);
+                closeQuizModal();
+                loadQuizzes();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert("Error submitting quiz");
+        }
+    }
+
+    function closeQuizModal() {
+        document.getElementById("quizModal").style.display = "none";
+        clearInterval(timerInterval);
+    }
+
+    function viewAttempt(quizId) {
+        const quiz = allQuizzes.find(q => q.id === quizId);
+        if (quiz.my_attempt) {
+            alert(\`Score: \${quiz.my_attempt.score}/\${quiz.max_points}\`);
+        }
+    }
+
+    loadQuizzes();
+</script>
+</body>
+</html>
+

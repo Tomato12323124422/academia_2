@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Quizzes - ACADEMIA LMS</title>
+    <link rel="stylesheet" href="CSS/dashboard.css">
+    <style>
+        /* Same styles as student quizzes.html */
+        .quizzes-grid { display: grid; gap: 20px; padding: 20px 0; }
+        .quiz-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #1976d2; }
+        .btn-create { background: #4caf50; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-edit, .btn-view { background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 5px; cursor: pointer; }
+        .btn-grade { background: #ff9800; color: white; }
+        #courseSelect { padding: 10px; margin-bottom: 20px; }
+        #createQuizModal, #attemptsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { background: white; margin: 50px auto; padding: 30px; border-radius: 10px; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+        .question-form { margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+        .add-question { background: #4caf50; color: white; border: none; padding: 8px 16px; cursor: pointer; margin-top: 10px; }
+        .attempt-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .attempt-table th, .attempt-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        .attempt-table th { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <aside class="sidebar">
+        <div class="logo-box">
+            <img src="assets/logo.png" class="logo">
+            <h3>ACADEMIA LMS</h3>
+        </div>
+        <ul id="menu">
+            <li onclick="window.location.href='dashboard.html'">Dashboard</li>
+            <li onclick="window.location.href='my-courses.html'">My Courses</li>
+            <li onclick="window.location.href='courses.html'">Courses</li>
+            <li onclick="window.location.href='teacher-assignments.html'">Assignments</li>
+            <li onclick="window.location.href='teacher-quizzes.html'" style="background: #e3f2fd;">Quizzes</li>
+            <li onclick="window.location.href='attendance-teacher.html'">Attendance</li>
+            <li onclick="window.location.href='grades.html'">Grades</li>
+        </ul>
+    </aside>
+    <main class="main">
+        <header class="topbar">
+            <h2 id="welcome">Manage Quizzes</h2>
+            <button onclick="logout()" class="logout">Logout</button>
+        </header>
+        <section class="panel">
+            <div style="margin-bottom: 20px;">
+                <select id="courseSelect" onchange="loadTeacherQuizzes()">
+                    <option value="">Select Course</option>
+                </select>
+                <button class="btn-create" onclick="openCreateQuizModal()">+ Create Quiz</button>
+            </div>
+            <div id="teacherQuizzesList" class="quizzes-grid">
+                <p>Select a course to view quizzes</p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Create Quiz Modal -->
+<div id="createQuizModal">
+    <div class="modal-content">
+        <h3>Create New Quiz</h3>
+        <form id="quizForm">
+            <input type="hidden" id="editingQuizId">
+            <label>Title: <input type="text" id="quizTitle" required></label>
+            <label>Description: <textarea id="quizDescription"></textarea></label>
+            <label>Due Date (YYYY-MM-DDTHH:mm): <input type="datetime-local" id="quizDueDate"></label>
+            <label>Time Limit (minutes): <input type="number" id="quizTimeLimit" value="60" min="5"></label>
+            <label>Max Points: <input type="number" id="quizMaxPoints" value="100" min="10"></label>
+            <div id="questionsForm">
+                <h4>Questions</h4>
+                <div class="question-form">
+                    <label>Question 1: <input type="text" name="questionText" required></label>
+                    <label>Type: <select name="type">
+                        <option value="mcq">MCQ</option>
+                        <option value="text">Text</option>
+                    </select></label>
+                    <div class="options-group">
+                        <label>Options (comma separated): <input type="text" name="options" placeholder="A,B,C,D"></label>
+                    </div>
+                    <label>Correct Answer: <input type="text" name="correctAnswer" required></label>
+                    <label>Points: <input type="number" name="points" value="10" min="1"></label>
+                </div>
+            </div>
+            <button type="button" class="add-question" onclick="addQuestion()">+ Add Question</button>
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" onclick="closeCreateQuizModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save Quiz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Attempts Modal -->
+<div id="attemptsModal">
+    <div class="modal-content">
+        <h3 id="attemptsTitle">Quiz Attempts</h3>
+        <div id="attemptsList"></div>
+        <button onclick="closeAttemptsModal()">Close</button>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/teacher-quizzes.js"></script>
+</body>
+</html>
+

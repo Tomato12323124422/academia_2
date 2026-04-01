@@ -1,11 +1,15 @@
-# Task: Fix Supabase query error for assignment submission counts (Completed)
+# Quiz System Implementation (Approved Plan)
 
 ## Steps:
-- [x] Plan approved by user
-- [x] Create TODO.md with steps
-- [x] Read assignments.js file contents
-- [x] Edit the query select statement to use separate count query (no PostgREST relation needed)
-- [x] Edit the submission_count mapping to use count from grouped query
-- [x] Fix Supabase count query syntax
-- [x] Test the endpoint (no more relationship or parse errors)
-- [x] Update TODO.md with completion
+- [ ] 1. Create `academia 2/frontend/quizzes.html` (student UI)
+- [ ] 2. Create `academia 2/frontend/teacher-quizzes.html` (teacher UI)
+- [ ] 3. Create `academia 2/frontend/js/teacher-quizzes.js` (teacher logic)
+- [ ] 4. Update `academia 2/frontend/js/dashboard.js` for teacher quizzes tab
+- [ ] 5. Update navigation in dashboards and index.html
+- [ ] 6. Add CSS styles to `academia 2/frontend/CSS/dashboard.css`
+- [ ] 7. Copy backend quizzes.js to `academia 2/backend/routes/quizzes.js` if missing
+- [ ] 8. Test full flow
+- [ ] 9. Mark complete
+
+Previous tasks (assignments fix): Completed ✅
+

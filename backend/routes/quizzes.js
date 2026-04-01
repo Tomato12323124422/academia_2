@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const supabase = require('../utils/db');
 
 // Auth middleware (reuse from grades.js)

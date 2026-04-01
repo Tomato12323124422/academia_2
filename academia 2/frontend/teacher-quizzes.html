@@ -100,8 +100,23 @@
     </div>
 </div>
 
-<script src="js/auth.js"></script>
+<script>
+function openCreateQuizModal() {
+    document.getElementById('createQuizModal').style.display = 'block';
+    document.getElementById('editingQuizId').value = '';
+    // Clear form...
+    const form = document.getElementById('quizForm');
+    form.reset();
+}
+function closeCreateQuizModal() {
+    document.getElementById('createQuizModal').style.display = 'none';
+}
+function loadTeacherQuizzes() {
+    alert('Load quizzes for selected course');
+}
+</script>
 <script src="js/teacher-quizzes.js"></script>
 </body>
 </html>
+
 

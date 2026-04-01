@@ -113,7 +113,7 @@
             <li onclick="window.location.href='dashboard.html'">Dashboard</li>
             <li onclick="window.location.href='my-courses.html'">My Courses</li>
             <li onclick="window.location.href='courses-browse.html'">Browse Courses</li>
-            <li onclick="window.location.href='assignments.html'">Assignments</li>
+<li onclick="window.location.href='quizzes.html'">Quizzes</li>
             <li onclick="window.location.href='grades.html'" style="background: #e3f2fd;">Grades</li>
         </ul>
     </aside>
@@ -219,7 +219,7 @@ async function loadGrades() {
             container.innerHTML = `
                 <div class="empty-state">
                     <h3>No grades yet</h3>
-                    <p>Complete assignments to see your grades here.</p>
+                    <p>Complete quizzes to see your grades here.</p>
                 </div>
             `;
             return;
@@ -269,25 +269,10 @@ async function loadGrades() {
         document.getElementById("totalCourses").innerText = [...new Set(grades.map(g => g.course_id))].length;
         document.getElementById("completedAssignments").innerText = grades.length;
 
-        // For pending, we need to fetch assignments
-        fetchPendingCount();
+// Removed pending assignments fetch
     }
 
-    async function fetchPendingCount() {
-        try {
-            const res = await fetch(`${API}/assignments/student`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            
-            if (res.ok && data.assignments) {
-                const pending = data.assignments.filter(a => !a.submission).length;
-                document.getElementById("pendingAssignments").innerText = pending;
-            }
-        } catch (err) {
-            console.error("Error fetching pending count:", err);
-        }
-    }
+
 
     // Load grades on page load
     loadGrades();

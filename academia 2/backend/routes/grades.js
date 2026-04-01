@@ -34,103 +34,52 @@ router.get('/my-grades', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Only students can access their grades' });
         }
 
-        // Get all submissions with grades AND quiz attempts
-        const [submissionsResult, quizAttemptsResult] = await Promise.all([
-            supabase
-                .from('submissions')
-                .select(`
-                    *,
-                    assignment:assignments(
-                        id,
-                        title,
-                        max_points,
-                        course:courses(id, title, category)
-                    )
-                `)
-                .eq('student_id', req.user.id)
-                .not('grade', 'is', null),
-            supabase
-                .from('quiz_attempts')
-                .select(`
-                    *,
-                    quiz:quizzes(
-                        id,
-                        title,
-                        max_points,
-                        course:courses(id, title, category)
-                    )
-                `)
-                .eq('student_id', req.user.id)
-                .not('score', 'is', null)
-        ]);
+        // Quiz-only grades (assignments removed)
+        const quizAttemptsResult = await supabase
+            .from('quiz_attempts')
+            .select(`
+                *,
+                quiz:quizzes(
+                    id,
+                    title,
+                    max_points,
+                    course:courses(id, title, category)
+                )
+            `)
+            .eq('student_id', req.user.id)
+            .not('score', 'is', null);
 
-        const submissions = submissionsResult.data || [];
         const quizAttempts = quizAttemptsResult.data || [];
 
-        const allGrades = [
-            ...submissions.map(submission => ({
-                id: submission.id,
-                type: 'assignment',
-                title: submission.assignment.title || 'Unknown Assignment',
-                course_name: submission.assignment.course?.title || 'Unknown',
-                course_category: submission.assignment.course?.category || 'General',
-                points: submission.assignment.max_points || 100,
-                grade: submission.grade || 0,
-                percentage: Math.round(((submission.grade || 0) / (submission.assignment.max_points || 100)) * 100),
-                feedback: submission.feedback,
-                submitted_at: submission.submitted_at || submission.created_at,
-                graded_at: submission.graded_at || submission.updated_at
-            })),
-            ...quizAttempts.map(attempt => ({
-                id: attempt.id,
-                type: 'quiz',
-                title: attempt.quiz.title || 'Unknown Quiz',
-                course_name: attempt.quiz.course?.title || 'Unknown',
-                course_category: attempt.quiz.course?.category || 'General',
-                points: attempt.quiz.max_points || 100,
-                grade: attempt.score || 0,
-                percentage: Math.round(((attempt.score || 0) / (attempt.quiz.max_points || 100)) * 100),
-                feedback: attempt.feedback,
-                submitted_at: attempt.completed_at,
-                graded_at: attempt.graded_at
-            }))
-        ];
+        const allGrades = quizAttempts.map(attempt => ({
+            id: attempt.id,
+            type: 'quiz',
+            title: attempt.quiz.title || 'Unknown Quiz',
+            course_name: attempt.quiz.course?.title || 'Unknown',
+            course_category: attempt.quiz.course?.category || 'General',
+            points: attempt.quiz.max_points || 100,
+            grade: attempt.score || 0,
+            percentage: Math.round(((attempt.score || 0) / (attempt.quiz.max_points || 100)) * 100),
+            feedback: attempt.feedback,
+            submitted_at: attempt.completed_at,
+            graded_at: attempt.graded_at
+        }));
 
         // Sort by graded_at desc
-        allGrades.sort((a, b) => new Date(b.graded_at || b.submitted_at) - new Date(a.graded_at || a.submitted_at));
+        allGrades.sort((a, b) => new Date(b.graded_at || a.submitted_at) - new Date(a.graded_at || a.submitted_at));
 
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        // Calculate overall grade
+        // Calculate overall grade (quizzes only)
         let totalPoints = 0;
         let earnedPoints = 0;
-        
-        const gradesWithCourse = (submissions || []).map(submission => {
-            const points = submission.assignment?.points || 100;
-            const earned = submission.grade || 0;
-            totalPoints += points;
-            earnedPoints += earned;
-            
-            return {
-                id: submission.id,
-                assignment_title: submission.assignment?.title || 'Unknown',
-                course_name: submission.assignment?.course?.title || 'Unknown',
-                course_category: submission.assignment?.course?.category || 'General',
-                points: points,
-                grade: earned,
-                percentage: Math.round((earned / points) * 100),
-                feedback: submission.feedback,
-                submitted_at: submission.submitted_at,
-                graded_at: submission.graded_at
-            };
+        allGrades.forEach(g => {
+            totalPoints += g.points;
+            earnedPoints += g.grade;
         });
-
+        
         const overallGrade = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
 
         res.json({ 
-            grades: gradesWithCourse,
+            grades: allGrades,
             overall: {
                 total_points: totalPoints,
                 earned_points: earnedPoints,
@@ -166,27 +115,14 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        // Get assignments
-        const assignments = await supabase
-            .from('assignments')
-            .select('*')
-            .eq('course_id', req.params.courseId);
-
-        // Get quizzes
+        // Quiz-only (assignments removed)
         const quizzes = await supabase
             .from('quizzes')
             .select('*')
             .eq('course_id', req.params.courseId);
 
-        const assessIds = [...(assignments.data || []).map(a => a.id), ...(quizzes.data || []).map(q => q.id)];
-
-        // Get submissions AND quiz_attempts
-        const [subsResult, attemptsResult, enrollmentsResult] = await Promise.all([
-            supabase.from('submissions').select(`
-                    *,
-                    student:users(id, full_name, email),
-                    assignment!inner(id, title, max_points)
-                `).in('assignment_id', (assignments.data || []).map(a => a.id)),
+        // Get quiz_attempts
+        const [attemptsResult, enrollmentsResult] = await Promise.all([
             supabase.from('quiz_attempts').select(`
                     *,
                     student:users(id, full_name, email),
@@ -195,7 +131,6 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
             supabase.from('enrollments').select('*, student:users(id, full_name, email)').eq('course_id', req.params.courseId)
         ]);
 
-        const submissions = subsResult.data || [];
         const quizAttempts = attemptsResult.data || [];
         const enrollments = enrollmentsResult.data || [];
 
@@ -210,24 +145,6 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
                     total_points: 0,
                     earned_points: 0
                 };
-            }
-        });
-
-        submissions.forEach(submission => {
-            const studentId = submission.student_id;
-            if (studentGrades[studentId]) {
-                const points = submission.assignment.max_points || 100;
-                const grade = submission.grade || 0;
-                studentGrades[studentId].assessments.push({
-                    type: 'assignment',
-                    title: submission.assignment.title,
-                    points,
-                    grade,
-                    percentage: Math.round((grade / points) * 100),
-                    submitted_at: submission.submitted_at
-                });
-                studentGrades[studentId].total_points += points;
-                studentGrades[studentId].earned_points += grade;
             }
         });
 
@@ -260,7 +177,6 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
 
         res.json({ 
             course: course[0],
-            assignments: assignments.data || [],
             quizzes: quizzes.data || [],
             student_grades: finalGrades
         });

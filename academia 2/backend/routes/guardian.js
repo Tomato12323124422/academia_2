@@ -316,88 +316,13 @@ router.get('/child/:childId/grades', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to view this student\'s grades' });
         }
 
-        // Get student's submissions with grades
-        const { data: submissions, error } = await supabase
-            .from('submissions')
-            .select('*')
-            .eq('student_id', req.params.childId)
-            .not('grade', 'is', null)
-            .order('graded_at', { ascending: false });
-
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        if (!submissions || submissions.length === 0) {
-            return res.json({ grades: [], overall: { total_points: 0, earned_points: 0, percentage: 0, letter_grade: 'N/A' } });
-        }
-
-        // Get assignment IDs
-        const assignmentIds = submissions.map(s => s.assignment_id);
-        
-        // Fetch assignments
-        const { data: assignments, assignError } = await supabase
-            .from('assignments')
-            .select('*')
-            .in('id', assignmentIds);
-
-        if (assignError) {
-            return res.status(500).json({ message: assignError.message });
-        }
-
-        // Get course IDs
-        const courseIds = assignments.map(a => a.course_id).filter(id => id);
-        
-        // Fetch courses
-        let courses = [];
-        if (courseIds.length > 0) {
-            const { data: courseData } = await supabase
-                .from('courses')
-                .select('id, title')
-                .in('id', courseIds);
-            courses = courseData || [];
-        }
-
-        // Create maps
-        const assignmentMap = {};
-        assignments.forEach(a => { assignmentMap[a.id] = a; });
-        const courseMap = {};
-        courses.forEach(c => { courseMap[c.id] = c; });
-
-        // Calculate grades
-        let totalPoints = 0;
-        let earnedPoints = 0;
-        
-        const gradesWithCourse = submissions.map(submission => {
-            const assignment = assignmentMap[submission.assignment_id];
-            const course = assignment ? courseMap[assignment.course_id] : null;
-            const points = assignment?.points || 100;
-            const earned = submission.grade || 0;
-            totalPoints += points;
-            earnedPoints += earned;
-            
-            return {
-                id: submission.id,
-                assignment_title: assignment?.title || 'Unknown',
-                course_name: course?.title || 'Unknown',
-                points: points,
-                grade: earned,
-                percentage: Math.round((earned / points) * 100),
-                feedback: submission.feedback,
-                submitted_at: submission.submitted_at,
-                graded_at: submission.graded_at
-            };
-        });
-
-        const overallGrade = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
-
         res.json({ 
-            grades: gradesWithCourse,
+            grades: [],
             overall: {
-                total_points: totalPoints,
-                earned_points: earnedPoints,
-                percentage: overallGrade,
-                letter_grade: getLetterGrade(overallGrade)
+                total_points: 0,
+                earned_points: 0,
+                percentage: 0,
+                letter_grade: 'N/A'
             }
         });
 
@@ -580,96 +505,7 @@ router.get('/child/:childId/achievements', authMiddleware, async (req, res) => {
     }
 });
 
-// GET CHILD'S SUBMITTED ASSIGNMENTS
-router.get('/child/:childId/assignments', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'parent') {
-            return res.status(403).json({ message: 'Only parents can access this' });
-        }
-
-        // Verify parent is linked to this child
-        const { data: link } = await supabase
-            .from('parent_student')
-            .select('*')
-            .eq('parent_id', req.user.id)
-            .eq('student_id', req.params.childId)
-            .single();
-
-        if (!link) {
-            return res.status(403).json({ message: 'Not authorized to view this student\'s assignments' });
-        }
-
-        // Get submissions
-        const { data: submissions, error } = await supabase
-            .from('submissions')
-            .select('*')
-            .eq('student_id', req.params.childId)
-            .order('submitted_at', { ascending: false });
-
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        if (!submissions || submissions.length === 0) {
-            return res.json({ assignments: [] });
-        }
-
-        // Get assignment IDs
-        const assignmentIds = submissions.map(s => s.assignment_id);
-        
-        // Fetch assignments
-        const { data: assignments, assignError } = await supabase
-            .from('assignments')
-            .select('*')
-            .in('id', assignmentIds);
-
-        if (assignError) {
-            return res.status(500).json({ message: assignError.message });
-        }
-
-        // Get course IDs
-        const courseIds = assignments.map(a => a.course_id).filter(id => id);
-        
-        // Fetch courses
-        let courses = [];
-        if (courseIds.length > 0) {
-            const { data: courseData } = await supabase
-                .from('courses')
-                .select('id, title')
-                .in('id', courseIds);
-            courses = courseData || [];
-        }
-
-        // Create maps
-        const assignmentMap = {};
-        assignments.forEach(a => { assignmentMap[a.id] = a; });
-        const courseMap = {};
-        courses.forEach(c => { courseMap[c.id] = c; });
-
-        const assignmentsWithDetails = submissions.map(sub => {
-            const assignment = assignmentMap[sub.assignment_id];
-            const course = assignment ? courseMap[assignment.course_id] : null;
-            return {
-                id: sub.id,
-                title: assignment?.title || 'Unknown',
-                description: assignment?.description,
-                course_name: course?.title || 'Unknown',
-                due_date: assignment?.due_date,
-                points: assignment?.points || 100,
-                grade: sub.grade,
-                status: sub.status,
-                submitted_at: sub.submitted_at,
-                graded_at: sub.graded_at
-            };
-        });
-
-        res.json({ assignments: assignmentsWithDetails });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
+// Removed assignments endpoint (feature removed)
 
 // Helper function to get letter grade
 function getLetterGrade(percentage) {

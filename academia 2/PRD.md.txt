@@ -13,8 +13,6 @@ Many institutions require a lightweight LMS that is easy to deploy, simple to us
 
 Deliver structured online learning.
 
-Enable assignment submission and grading.
-
 Allow guardians to monitor performance.
 
 Support live virtual classes.

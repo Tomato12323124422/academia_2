@@ -191,110 +191,13 @@ CREATE TABLE IF NOT EXISTS attendance (
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 */
 
--- ============================================
--- 7. ASSIGNMENTS TABLE (NEW - MUST CREATE)
--- ============================================
-
-CREATE TABLE IF NOT EXISTS assignments (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
-    teacher_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    file_url TEXT,
-    due_date TIMESTAMP,
-    max_points INTEGER DEFAULT 100,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
-
--- Policies
-CREATE POLICY "Teachers can manage their course assignments"
-    ON assignments FOR ALL
-    USING (
-        teacher_id = auth.uid() OR 
-        EXISTS (
-            SELECT 1 FROM courses 
-            WHERE id = course_id AND teacher_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Students can view assignments for enrolled courses"
-    ON assignments FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM enrollments 
-            WHERE course_id = assignments.course_id 
-            AND student_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Admins can view all assignments"
-    ON assignments FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
-
--- ============================================
--- 8. SUBMISSIONS TABLE (NEW - MUST CREATE)
--- ============================================
-
-CREATE TABLE IF NOT EXISTS submissions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    assignment_id UUID REFERENCES assignments(id) ON DELETE CASCADE,
-    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    file_url TEXT NOT NULL,
-    submitted_at TIMESTAMP DEFAULT NOW(),
-    grade NUMERIC(5,2),
-    feedback TEXT,
-    status TEXT DEFAULT 'submitted' CHECK (status IN ('submitted', 'graded', 'returned')),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(assignment_id, student_id)
-);
-
--- Enable RLS
-ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
-
--- Policies
-CREATE POLICY "Students can manage their own submissions"
-    ON submissions FOR ALL
-    USING (student_id = auth.uid());
-
-CREATE POLICY "Teachers can view and grade submissions for their courses"
-    ON submissions FOR ALL
-    USING (
-        EXISTS (
-            SELECT 1 FROM assignments a
-            JOIN courses c ON a.course_id = c.id
-            WHERE a.id = submissions.assignment_id
-            AND c.teacher_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Admins can view all submissions"
-    ON submissions FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
+-- Removed assignments and submissions tables
 
 -- ============================================
 -- 9. INDEXES FOR PERFORMANCE
 -- ============================================
 
-CREATE INDEX IF NOT EXISTS idx_assignments_course ON assignments(course_id);
-CREATE INDEX IF NOT EXISTS idx_assignments_teacher ON assignments(teacher_id);
-CREATE INDEX IF NOT EXISTS idx_submissions_assignment ON submissions(assignment_id);
-CREATE INDEX IF NOT EXISTS idx_submissions_student ON submissions(student_id);
+
 CREATE INDEX IF NOT EXISTS idx_enrollments_student ON enrollments(student_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_course ON enrollments(course_id);
 CREATE INDEX IF NOT EXISTS idx_attendance_session ON attendance(session_id);
@@ -317,19 +220,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply to assignments
-DROP TRIGGER IF EXISTS update_assignments_updated_at ON assignments;
-CREATE TRIGGER update_assignments_updated_at
-    BEFORE UPDATE ON assignments
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
 
--- Apply to submissions
-DROP TRIGGER IF EXISTS update_submissions_updated_at ON submissions;
-CREATE TRIGGER update_submissions_updated_at
-    BEFORE UPDATE ON submissions
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
 
 -- Apply to users
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;

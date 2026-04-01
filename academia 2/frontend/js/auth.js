@@ -10,9 +10,7 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
     ? 'http://localhost:5000' 
     : 'https://academia-2-xgdr.onrender.com';
 
-
 const API = `${API_BASE}/api/auth`;
-
 
 /* ================= REGISTER ================= */
 const registerForm = document.getElementById("registerForm");
@@ -37,7 +35,6 @@ if (registerForm) {
             console.log(data); // 👈 debug output
 
             if(res.ok){
-                alert("Registration successful");
                 window.location.href = "login.html";
             } else {
                 alert(data.message || "Registration failed");
@@ -49,8 +46,6 @@ if (registerForm) {
         }
     });
 }
-
-
 
 /* ================= LOGIN ================= */
 const loginForm = document.getElementById("loginForm");
@@ -78,8 +73,6 @@ if (loginForm) {
                 // ✅ SAVE TOKEN + USER
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-
-                alert("Login successful");
 
                 // ✅ REDIRECT BASED ON ROLE
                 if (data.user.role === 'admin') {

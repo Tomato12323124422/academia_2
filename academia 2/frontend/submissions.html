@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assignment Submissions - ACADEMIA LMS</title>
+    <link rel="stylesheet" href="CSS/dashboard.css">
+    <style>
+        .submission-list { max-height: 60vh; overflow-y: auto; }
+        .submission-card { border: 1px solid #ddd; margin-bottom: 10px; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <aside class="sidebar">
+        <!-- Sidebar menu -->
+    </aside>
+    <main class="main">
+        <header class="topbar">
+            <h2>Submissions</h2>
+            <button onclick="loadSubmissions()">Refresh</button>
+        </header>
+        <section class="panel">
+            <select id="assignmentSelect" onchange="loadSubmissions()">
+                <option value="">Select Assignment</option>
+            </select>
+            <div id="submissionsList" class="submission-list">
+                <p>Select assignment</p>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="js/auth.js"></script>
+<script>
+    const API = 'https://academia-2-xgdr.onrender.com/api';
+    const token = localStorage.getItem('token');
+    
+    async function loadAssignments() {
+        const res = await fetch(`${API}/assignments/course/all`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const select = document.getElementById('assignmentSelect');
+        data.assignments.forEach(assignment => {
+            const option = document.createElement('option');
+            option.value = assignment.id;
+            option.textContent = `${assignment.title} (${new Date(assignment.due_date).toLocaleString()})`;
+            select.appendChild(option);
+        });
+    }
+    
+    async function loadSubmissions() {
+        const assignmentId = document.getElementById('assignmentSelect').value;
+        if (!assignmentId) return;
+        
+        const res = await fetch(`${API}/submissions/assignment/${assignmentId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        const container = document.getElementById('submissionsList');
+        container.innerHTML = data.submissions.map(submission => `
+            <div class="submission-card">
+                <h4>${submission.student.full_name}</h4>
+                <p>${new Date(submission.submitted_at).toLocaleString()}</p>
+                <a href="${submission.file_url}" target="_blank">📎 Download</a>
+                <div class="grade-form">
+                    <input type="number" class="grade-input" value="${submission.grade || ''}" placeholder="Grade" onchange="updateGrade('${submission.id}', this.value)">
+                    <input type="text" placeholder="Feedback" value="${submission.feedback || ''}" onblur="updateFeedback('${submission.id}', this.value)">
+                </div>
+            </div>
+        `).join('') || '<p>No submissions</p>';
+    }
+    
+    async function updateGrade(submissionId, grade) {
+        await fetch(`${API}/submissions/${submissionId}`, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ grade: parseInt(grade) })
+        });
+        alert('Grade updated');
+    }
+    
+    async function updateFeedback(submissionId, feedback) {
+        await fetch(`${API}/submissions/${submissionId}`, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ feedback })
+        });
+    }
+    
+    loadAssignments();
+</script>
+</body>
+</html>

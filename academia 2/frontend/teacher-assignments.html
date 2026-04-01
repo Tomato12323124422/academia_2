@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Assignments - ACADEMIA LMS</title>
+    <link rel="stylesheet" href="CSS/dashboard.css">
+    <style>
+        .teacher-form { max-width: 600px; margin: 20px 0; }
+        .assignment-list { display: grid; gap: 15px; }
+        .submission-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+        .grade-form { display: flex; gap: 10px; align-items: center; }
+        .grade-input { width: 80px; padding: 5px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <aside class="sidebar">
+        <div class="logo-box">
+            <img src="assets/logo.png" class="logo">
+            <h3>ACADEMIA LMS</h3>
+        </div>
+        <ul id="menu">
+            <li onclick="window.location.href='dashboard.html'">Dashboard</li>
+            <li onclick="window.location.href='teacher-assignments.html'" style="background: #e3f2fd;">Assignments</li>
+            <li onclick="window.location.href='attendance-teacher.html'">Attendance</li>
+            <li onclick="window.location.href='grades.html'">Grades</li>
+        </ul>
+    </aside>
+    <main class="main">
+        <header class="topbar">
+            <h2 id="welcome">Manage Assignments</h2>
+            <button onclick="logout()">Logout</button>
+        </header>
+        <section class="panel">
+            <h3>Create Assignment</h3>
+            <form class="teacher-form" id="createAssignmentForm">
+                <select id="courseSelect" required>
+                    <option value="">Select Course</option>
+                </select>
+                <input type="text" id="title" placeholder="Assignment Title" required>
+                <textarea id="description" placeholder="Description"></textarea>
+                <input type="datetime-local" id="dueDate">
+                <input type="file" id="fileUpload">
+                <button type="submit">Create Assignment</button>
+            </form>
+            <div id="assignmentsList">
+                <p>Loading your courses...</p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+    const API = 'https://academia-2-xgdr.onrender.com/api';
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    
+    document.getElementById('welcome').innerText = 'Assignments - ' + user.full_name;
+    
+    async function loadCourses() {
+        const res = await fetch(`${API}/courses/my-courses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const select = document.getElementById('courseSelect');
+        data.courses.forEach(course => {
+            const option = document.createElement('option');
+            option.value = course.id;
+            option.textContent = course.title;
+            select.appendChild(option);
+        });
+    }
+    
+    document.getElementById('createAssignmentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const course_id = document.getElementById('courseSelect').value;
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const due_date = document.getElementById('dueDate').value;
+        const file = document.getElementById('fileUpload').files[0];
+        
+        let file_url = null;
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const uploadRes = await fetch(`${API}/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            file_url = uploadData.url;
+        }
+        
+        const res = await fetch(`${API}/assignments`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ course_id, title, description, due_date, file_url })
+        });
+        
+        if (res.ok) {
+            alert('Assignment created!');
+            e.target.reset();
+            loadTeacherAssignments();
+        } else {
+            const err = await res.json();
+            alert(err.message);
+        }
+    });
+    
+    async function loadTeacherAssignments() {
+        const courseId = document.getElementById('courseSelect').value;
+        if (!courseId) return document.getElementById('assignmentsList').innerHTML = '<p>Select course</p>';
+        
+        const res = await fetch(`${API}/assignments/course/${courseId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        const container = document.getElementById('assignmentsList');
+        container.innerHTML = data.assignments.map(assignment => `
+            <div class="assignment-card">
+                <h4>${assignment.title}</h4>
+                <p>${assignment.description}</p>
+                <p>Due: ${new Date(assignment.due_date).toLocaleString()}</p>
+            </div>
+        `).join('') || '<p>No assignments.</p>';
+    }
+    
+    document.getElementById('courseSelect').addEventListener('change', loadTeacherAssignments);
+    
+    loadCourses();
+    
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+</script>
+</body>
+</html>

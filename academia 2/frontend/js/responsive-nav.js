@@ -57,9 +57,18 @@ window.addEventListener('resize', function() {
   }
 });
 
-// Initialize
+// Initialize responsive nav
 document.addEventListener('DOMContentLoaded', function() {
   if (window.innerWidth <= 1024) {
     document.querySelector('.sidebar').classList.add('mobile-hidden');
+  }
+  
+  // Load responsive-nav early for all pages
+  const hamburger = document.querySelector('.hamburger-menu');
+  if (hamburger) {
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSidebar();
+    });
   }
 });

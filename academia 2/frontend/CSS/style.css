@@ -662,8 +662,27 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
+  .hamburger-menu {
+    display: block;
+  }
+  
   .sidebar {
-    width: 260px;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    width: 280px;
+  }
+  
+  .sidebar.mobile-hidden {
+    transform: translateX(-100%);
+  }
+  
+  .main {
+    margin-left: 0;
+  }
+  
+  .main.mobile-sidebar-open {
+    margin-left: 0;
   }
 }
 

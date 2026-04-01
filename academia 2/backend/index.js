@@ -6,7 +6,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const coursesRoutes = require('./routes/courses');
 const attendanceRoutes = require('./routes/attendance');
-const assignmentsRoutes = require('./routes/assignments');
+// const assignmentsRoutes = require('./routes/assignments'); // Handled by upload.js
 const gradesRoutes = require('./routes/grades');
 const gamificationRoutes = require('./routes/gamification');
 const guardianRoutes = require('./routes/guardian');
@@ -41,7 +41,7 @@ app.use('/api/quizzes', quizzesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/attendance', attendanceRoutes);
-app.use('/api/assignments', assignmentsRoutes);
+// app.use('/api/assignments', assignmentsRoutes);
 app.use('/api/grades', gradesRoutes);
 app.use('/api/gamification', gamificationRoutes);
 app.use('/api/guardian', guardianRoutes);

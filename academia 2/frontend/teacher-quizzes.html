@@ -47,7 +47,20 @@
                 <select id="courseSelect" onchange="loadTeacherQuizzes()">
                     <option value="">Select Course</option>
                 </select>
-                <button class="btn-create" onclick="openCreateQuizModal()">+ Create Quiz</button>
+<button class="btn-create" onclick="openCreateQuizModal()">+ Create Quiz</button>
+<script>
+window.openCreateQuizModal = function() {
+    document.getElementById('createQuizModal').style.display = 'block';
+};
+window.closeCreateQuizModal = function() {
+    document.getElementById('createQuizModal').style.display = 'none';
+};
+window.loadTeacherQuizzes = function() {
+    const courseId = document.getElementById('courseSelect').value;
+    if (courseId) loadQuizzes(courseId); // Calls js func
+};
+</script>
+
             </div>
             <div id="teacherQuizzesList" class="quizzes-grid">
                 <p>Select a course to view quizzes</p>

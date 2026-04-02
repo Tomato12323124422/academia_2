@@ -1,10 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../utils/db');
-const { verifyToken, isTeacher, isStudent } = require('../middleware/auth');
+// Middleware to verify JWT token
+const authMiddleware = async (req, res, next) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ message: 'No token provided' });
+
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
+        
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', decoded.id);
+
+        if (error || !user || user.length === 0) {
+            return res.status(401).json({ message: 'Invalid token' });
+        }
+
+        req.user = user[0];
+        next();
+    } catch (err) {
+        res.status(401).json({ message: 'Invalid token' });
+    }
+};
 
 // Get all quizzes for a course
-router.get('/course/:courseId', verifyToken, async (req, res) => {
+router.get('/course/:courseId', authMiddleware, async (req, res) => {
     try {
         const { courseId } = req.params;
         
@@ -34,7 +57,7 @@ router.get('/course/:courseId', verifyToken, async (req, res) => {
 });
 
 // Get a specific quiz with questions (Student/Teacher)
-router.get('/:quizId', verifyToken, async (req, res) => {
+router.get('/:quizId', authMiddleware, async (req, res) => {
     try {
         const { quizId } = req.params;
 
@@ -74,8 +97,11 @@ router.get('/:quizId', verifyToken, async (req, res) => {
 });
 
 // Create a quiz (Teacher only)
-router.post('/', verifyToken, isTeacher, async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
     try {
+        if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only teachers can create quizzes' });
+        }
         const { course_id, title, description, time_limit, questions } = req.body;
 
         // 1. Create quiz
@@ -116,8 +142,11 @@ router.post('/', verifyToken, isTeacher, async (req, res) => {
 });
 
 // Submit quiz (Student only)
-router.post('/:quizId/submit', verifyToken, isStudent, async (req, res) => {
+router.post('/:quizId/submit', authMiddleware, async (req, res) => {
     try {
+        if (req.user.role !== 'student') {
+            return res.status(403).json({ message: 'Only students can submit quizzes' });
+        }
         const { quizId } = req.params;
         const { answers } = req.body; // Array of selected indices
 
@@ -163,8 +192,11 @@ router.post('/:quizId/submit', verifyToken, isStudent, async (req, res) => {
 });
 
 // Get quiz results for teacher
-router.get('/:quizId/results', verifyToken, isTeacher, async (req, res) => {
+router.get('/:quizId/results', authMiddleware, async (req, res) => {
     try {
+        if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only teachers can view results' });
+        }
         const { quizId } = req.params;
 
         const { data: results, error } = await supabase

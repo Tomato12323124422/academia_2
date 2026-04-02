@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Students - MASENO UNIVERSITY LMS</title>
+    <title>Manage Students - MASENO UNIVERSITY LMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#006738">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="CSS/dashboard.css">
     <style>
         .students-container {
@@ -199,6 +202,8 @@
 
 </div>
 
+<script src="js/pwa.js"></script>
+<script src="js/auth.js"></script>
 <script>
     const API = "/api";
     const user = JSON.parse(localStorage.getItem("user"));

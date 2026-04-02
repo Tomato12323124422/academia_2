@@ -1,21 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Offline - MASENO UNIVERSITY LMS</title>
-  <meta name="viewport" content="width=device-width">
+  <meta name="theme-color" content="#006738">
   <link rel="manifest" href="manifest.json">
   <style>
-    body { font-family: Segoe UI; text-align: center; padding: 50px; background: #f8f9fa; }
-    .logo { width: 100px; margin-bottom: 20px; }
-    h1 { color: #667eea; }
-    p { color: #666; }
-    button { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; }
+    body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 60px 20px; background: #F4F7F6; color: #1A2B23; }
+    .logo { width: 100px; margin-bottom: 25px; }
+    h1 { color: #006738; margin-bottom: 10px; }
+    p { color: #4A5D54; margin-bottom: 30px; line-height: 1.6; }
+    button { 
+        background: #006738; 
+        color: white; 
+        border: none; 
+        padding: 14px 32px; 
+        border-radius: 30px; 
+        cursor: pointer; 
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    button:hover { background: #004d2a; transform: translateY(-2px); }
   </style>
 </head>
 <body>
-  <img src="assets/logo.png" class="logo">
-  <h1>📱 Offline Mode</h1>
-  <p>Your dashboard is cached. Connect to internet for live data.</p>
-  <button onclick="location.reload()">Retry Online</button>
+  <img src="assets/logo.png" class="logo" alt="Logo">
+  <h1>📡 Offline Mode</h1>
+  <p>You are viewing a cached version of the LMS.<br>Please check your internet connection to sync new data.</p>
+  <button onclick="location.reload()">Refresh Connection</button>
 </body>
 </html>

@@ -1,19 +1,25 @@
 {
   "name": "Maseno University LMS",
-  "short_name": "Maseno LMS",
-  "description": "LMS with QR attendance, gamification, live classes",
-  "scope": "/frontend/",
-  "start_url": "/frontend/index.html",
+  "short_name": "MASENO LMS",
+  "description": "Learning Management System for Maseno University - Fountain of Excellence",
+  "scope": "/",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#f8f9fa",
-  "theme_color": "#667eea",
-  "orientation": "portrait-primary",
+  "background_color": "#F4F7F6",
+  "theme_color": "#006738",
+  "orientation": "any",
   "icons": [
     {
-      "src": "assets/logo.png",
-      "sizes": "192x192 512x512",
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

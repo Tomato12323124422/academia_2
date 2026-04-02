@@ -257,7 +257,7 @@ router.get('/:id/enrollments', authMiddleware, async (req, res) => {
             .from('enrollments')
             .select(`
                 *,
-                student:users(id, full_name, email)
+                student:student_id(id, full_name, email)
             `)
             .eq('course_id', req.params.id);
 

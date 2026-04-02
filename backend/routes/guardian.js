@@ -276,7 +276,7 @@ router.get('/child/:childId/grades', authMiddleware, async (req, res) => {
 
         const { data: submissions, error } = await supabase
             .from('submissions')
-            .select('*')
+            .select('*, assignment:assignments(*, course:courses(title))')
             .eq('student_id', req.params.childId)
             .not('grade', 'is', null)
             .order('graded_at', { ascending: false });
@@ -286,46 +286,69 @@ router.get('/child/:childId/grades', authMiddleware, async (req, res) => {
             return res.status(500).json({ message: error.message });
         }
 
-        if (!submissions || submissions.length === 0) {
-            return res.json({ grades: [], overall: { total_points: 0, earned_points: 0, percentage: 0, letter_grade: 'N/A' } });
-        }
+        const { data: quizSubmissions, error: quizError } = await supabase
+            .from('quiz_submissions')
+            .select('*, quiz:quizzes(*, course:courses(title))')
+            .eq('student_id', req.params.childId)
+            .order('submitted_at', { ascending: false });
 
-        const assignmentIds = submissions.map(s => s.assignment_id).filter(id => id);
-        let assignments = [];
-        if (assignmentIds.length > 0) {
-            const { data: assignData, error: assignError } = await supabase.from('assignments').select('*').in('id', assignmentIds);
-            if (assignError) throw assignError;
-            assignments = assignData || [];
+        if (quizError) {
+            console.error('Quiz submission error:', quizError);
+            return res.status(500).json({ message: quizError.message });
         }
-
-        const assignmentMap = {};
-        assignments.forEach(a => { assignmentMap[a.id] = a; });
 
         let totalPoints = 0;
         let earnedPoints = 0;
+        const allGrades = [];
 
-        const gradesWithCourse = submissions.map(sub => {
-            const assignment = assignmentMap[sub.assignment_id];
-            const points = assignment?.points || 100;
+        (submissions || []).forEach(sub => {
+            const assignment = sub.assignment || {};
+            const course = assignment.course || {};
+            const points = assignment.points || 100;
             const earned = sub.grade || 0;
             totalPoints += points;
             earnedPoints += earned;
 
-            return {
-                id: sub.id,
-                assignment_title: assignment?.title || 'Unknown',
+            allGrades.push({
+                id: `assign_${sub.id}`,
+                assignment_title: assignment.title || 'Unknown Assignment',
+                course_name: course.title || 'Unknown Course',
                 points,
                 grade: earned,
-                percentage: Math.round((earned / points) * 100),
+                percentage: points > 0 ? Math.round((earned / points) * 100) : 0,
                 feedback: sub.feedback,
-                graded_at: sub.graded_at
-            };
+                graded_at: sub.graded_at,
+                type: 'assignment'
+            });
         });
+
+        (quizSubmissions || []).forEach(sub => {
+            const quiz = sub.quiz || {};
+            const course = quiz.course || {};
+            const points = sub.total_marks || 100;
+            const earned = sub.score || 0;
+            totalPoints += points;
+            earnedPoints += earned;
+
+            allGrades.push({
+                id: `quiz_${sub.id}`,
+                assignment_title: quiz.title ? `Quiz: ${quiz.title}` : 'Unknown Quiz',
+                course_name: course.title || 'Unknown Course',
+                points,
+                grade: earned,
+                percentage: points > 0 ? Math.round((earned / points) * 100) : 0,
+                feedback: null,
+                graded_at: sub.submitted_at,
+                type: 'quiz'
+            });
+        });
+
+        allGrades.sort((a, b) => new Date(b.graded_at || 0) - new Date(a.graded_at || 0));
 
         const overallGrade = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
 
         res.json({ 
-            grades: gradesWithCourse,
+            grades: allGrades,
             overall: {
                 total_points: totalPoints,
                 earned_points: earnedPoints,
@@ -399,7 +422,49 @@ router.get('/child/:childId/assignments', authMiddleware, async (req, res) => {
 
         if (error) return res.status(500).json({ message: error.message });
 
-        res.json({ assignments: submissions || [] });
+        const { data: quizSubmissions, error: quizError } = await supabase
+            .from('quiz_submissions')
+            .select('*, quiz:quizzes(*, course:courses(title))')
+            .eq('student_id', req.params.childId)
+            .order('submitted_at', { ascending: false });
+
+        if (quizError) return res.status(500).json({ message: quizError.message });
+
+        const formattedAssignments = [];
+        
+        (submissions || []).forEach(sub => {
+             const assignment = sub.assignment || {};
+             const course = assignment.course || {};
+             formattedAssignments.push({
+                  id: `assign_${sub.id}`,
+                  title: assignment.title || 'Unknown Assignment',
+                  course_name: course.title || 'Unknown Course',
+                  due_date: assignment.due_date,
+                  status: sub.grade !== null ? 'graded' : 'submitted',
+                  grade: sub.grade,
+                  points: assignment.points || 100,
+                  submitted_at: sub.submitted_at
+             });
+        });
+
+        (quizSubmissions || []).forEach(sub => {
+             const quiz = sub.quiz || {};
+             const course = quiz.course || {};
+             formattedAssignments.push({
+                  id: `quiz_${sub.id}`,
+                  title: quiz.title ? `Quiz: ${quiz.title}` : 'Unknown Quiz',
+                  course_name: course.title || 'Unknown Course',
+                  due_date: null,
+                  status: 'graded',
+                  grade: sub.score,
+                  points: sub.total_marks || 100,
+                  submitted_at: sub.submitted_at
+             });
+        });
+
+        formattedAssignments.sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0));
+
+        res.json({ assignments: formattedAssignments });
 
     } catch (err) {
         console.error('Assignments error:', err);

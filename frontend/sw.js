@@ -38,7 +38,10 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(e.request).catch(() => {
         // Offline API fallback notice in JS
-        return new Response('Offline - API unavailable', {status: 503});
+        return new Response(JSON.stringify({message: 'Offline - API unavailable'}), {
+          status: 503,
+          headers: {'Content-Type': 'application/json'}
+        });
       })
     );
     return;

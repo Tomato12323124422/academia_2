@@ -1,7 +1,7 @@
 // Use local server for development, or production URL
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'http://localhost:5000' 
-    : 'https://maseno-university-lms.onrender.com';
+    : window.location.origin;
 
 const API = `${API_BASE}/api`;
 

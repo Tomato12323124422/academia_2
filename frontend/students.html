@@ -322,7 +322,7 @@
                                         <td>${student.student?.full_name || 'N/A'}</td>
                                         <td>${student.student?.id?.substring(0, 8).toUpperCase() || 'N/A'}</td>
                                         <td>${student.student?.email || 'N/A'}</td>
-                                        <td>${new Date(student.enrolled_at).toLocaleDateString()}</td>
+                                        <td>${student.enrolled_at ? new Date(student.enrolled_at).toLocaleDateString() : 'N/A'}</td>
                                         <td>
                                             <span class="status-badge status-active">Active</span>
                                         </td>
@@ -370,7 +370,7 @@
                                     <td>${student.student?.full_name || 'N/A'}</td>
                                     <td>${student.student?.id?.substring(0, 8).toUpperCase() || 'N/A'}</td>
                                     <td>${student.student?.email || 'N/A'}</td>
-                                    <td>${new Date(student.enrolled_at).toLocaleDateString()}</td>
+                                    <td>${student.enrolled_at ? new Date(student.enrolled_at).toLocaleDateString() : 'N/A'}</td>
                                     <td>
                                         <span class="status-badge status-active">Active</span>
                                     </td>
@@ -522,7 +522,7 @@
             const regNum = student.student?.id?.substring(0, 8).toUpperCase() || "N/A";
             const email = student.student?.email || "N/A";
             const course = student.course_title || "N/A";
-            const date = new Date(student.enrolled_at).toLocaleDateString();
+            const date = student.enrolled_at ? new Date(student.enrolled_at).toLocaleDateString() : "N/A";
             const status = "Active";
             
             csvContent += `"${name}","${regNum}","${email}","${course}","${date}","${status}"\n`;

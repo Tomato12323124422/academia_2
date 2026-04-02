@@ -141,10 +141,7 @@ router.get('/upcoming', authMiddleware, async (req, res) => {
         const now = new Date().toISOString();
         const { data: sessions, error } = await supabase
             .from('sessions')
-            .select(`
-                *,
-                course:courses(title)
-            `)
+            .select('*')
             .in('course_id', courseIds)
             .gte('date', now)
             .order('date', { ascending: true });

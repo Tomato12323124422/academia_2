@@ -420,10 +420,10 @@ router.get('/sessions/:id/attendance', authMiddleware, async (req, res) => {
 // GET ALL ACTIVE SESSIONS (for students to see live classes)
 router.get('/active-sessions', authMiddleware, async (req, res) => {
     try {
-        // Get all active sessions with course info
+        // Get all active sessions (Simplified to avoid join errors)
         const { data: sessions, error } = await supabase
             .from('sessions')
-            .select('*, course:courses(title, category)')
+            .select('*')
             .eq('status', 'active')
             .order('date', { ascending: false });
 
@@ -593,12 +593,11 @@ router.get('/my-attendance', authMiddleware, async (req, res) => {
         if (req.user.role !== 'student') {
             return res.status(403).json({ message: 'Only students can view their attendance' });
         }
-
         const { data: attendance, error } = await supabase
             .from('attendance')
             .select(`
                 *,
-                session:sessions(*, course:courses(title))
+                session:sessions(*)
             `)
             .eq('student_id', req.user.id)
             .order('marked_at', { ascending: false });

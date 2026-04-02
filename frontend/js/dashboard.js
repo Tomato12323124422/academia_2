@@ -233,31 +233,36 @@ async function loadStudentLiveClasses() {
         // Render Active Sessions
         if (activeData.sessions && activeData.sessions.length > 0) {
             container.innerHTML += "<h4>🔴 Live Now</h4>";
-            container.innerHTML += activeData.sessions.map(session => `
+            container.innerHTML += activeData.sessions.map(session => {
+                const title = session.topic || session.title || session.course?.title || 'Active Session';
+                return `
                 <div class="live-class-item live-now">
                     <div class="live-class-info">
-                        <h4>${session.course?.title || 'Unknown Course'}</h4>
+                        <h4>${title}</h4>
                         <p>Started: ${new Date(session.start_time || session.date).toLocaleString()}</p>
                         ${session.zoom_link ? `<a href="${session.zoom_link}" target="_blank" class="primary-btn" style="display:inline-block; margin-top:10px; padding: 5px 10px; font-size:12px;">Join Class</a>` : ''}
                     </div>
                     <div><span class="live-badge">LIVE NOW</span></div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // Render Scheduled Sessions
         if (upcomingData.sessions && upcomingData.sessions.length > 0) {
             container.innerHTML += "<h4 style='margin-top:20px;'>📅 Upcoming Classes</h4>";
-            container.innerHTML += upcomingData.sessions.map(session => `
+            container.innerHTML += upcomingData.sessions.map(session => {
+                const title = session.topic || session.title || 'Live Class';
+                const courseName = session.course?.title || 'Course ID: ' + session.course_id;
+                return `
                 <div class="live-class-item">
                     <div class="live-class-info">
-                        <h4>${session.title || 'Live Class'}</h4>
-                        <p>Course: ${session.course?.title || 'Unknown'}</p>
+                        <h4>${title}</h4>
+                        <p>Course: ${courseName}</p>
                         <p>Scheduled: ${new Date(session.date).toLocaleString()}</p>
                     </div>
                     <div class="live-badge" style="background: #00ea; color: white;">SCHEDULED</div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         if (container.innerHTML === "") {
@@ -502,11 +507,13 @@ async function loadInstructorLiveClasses() {
         if (res.ok && data.sessions && data.sessions.length > 0) {
             container.innerHTML = data.sessions.map(session => {
                 const date = new Date(session.date);
+                const title = session.topic || session.title || 'Live Class';
+                const courseName = session.course?.title || 'Course ID: ' + session.course_id;
                 return `
                 <div class="session-item" style="border-left: 4px solid #00ea;">
                     <div class="session-info">
-                        <h4>${session.title || 'Live Class'}</h4>
-                        <p>Course: ${session.course?.title || 'Unknown'}</p>
+                        <h4>${title}</h4>
+                        <p>Course: ${courseName}</p>
                         <p>Scheduled: ${date.toLocaleString()}</p>
                         <p>Link: <a href="${session.zoom_link}" target="_blank">${session.zoom_link}</a></p>
                     </div>
@@ -524,6 +531,7 @@ async function loadInstructorLiveClasses() {
         document.getElementById("instructorLiveClasses").innerHTML = "<p>Error loading scheduled classes.</p>";
     }
 }
+
 
 async function updateScheduleCourseSelect() {
     const select = document.getElementById("scheduleCourseSelect");

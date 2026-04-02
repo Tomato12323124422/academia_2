@@ -205,7 +205,7 @@
 <script src="js/pwa.js"></script>
 <script src="js/auth.js"></script>
 <script>
-    const API = "/api";
+    const PAGE_API = "/api";
     const user = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
@@ -227,7 +227,7 @@
     async function loadStudents() {
         try {
             // First, get teacher's courses
-            const coursesRes = await fetch(`${API}/courses/my-courses`, {
+            const coursesRes = await fetch(`${PAGE_API}/courses/my-courses`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -252,7 +252,7 @@
             // Get enrollments for each course
             allStudents = [];
             for (const course of allCourses) {
-                const enrollRes = await fetch(`${API}/courses/${course.id}/enrollments`, {
+                const enrollRes = await fetch(`${PAGE_API}/courses/${course.id}/enrollments`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
@@ -433,13 +433,13 @@
         
         try {
             // Get attendance for this student in this course
-            const attendRes = await fetch(`${API}/attendance/student/${studentId}/course/${courseId}`, {
+            const attendRes = await fetch(`${PAGE_API}/attendance/student/${studentId}/course/${courseId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const attendData = await attendRes.json();
             
             // Get grades for this student in this course
-            const gradesRes = await fetch(`${API}/grades/student/${studentId}/course/${courseId}`, {
+            const gradesRes = await fetch(`${PAGE_API}/grades/student/${studentId}/course/${courseId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const gradesData = await gradesRes.json();
@@ -476,7 +476,7 @@
         }
         
         try {
-            const res = await fetch(`${API}/courses/${courseId}/enrollments/${studentId}`, {
+            const res = await fetch(`${PAGE_API}/courses/${courseId}/enrollments/${studentId}`, {
                 method: "DELETE",
                 headers: { 
                     "Authorization": `Bearer ${token}`,

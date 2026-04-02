@@ -48,15 +48,16 @@ self.addEventListener('fetch', e => {
   }
   
   // Static - cache with network update
-  e.respondWith(
+    e.respondWith(
     caches.open(CACHE_NAME).then(cache => 
       cache.match(e.request).then(cached => 
         fetch(e.request).then(network => {
-          cache.put(e.request, network.clone());
+          if (e.request.method === 'GET') {
+            cache.put(e.request, network.clone());
+          }
           return network;
         }).catch(() => cached || caches.match('./offline.html'))
       )
     )
   );
 });
-

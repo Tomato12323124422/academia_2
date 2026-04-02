@@ -207,10 +207,37 @@
         <!-- Live Class Scheduling - Instructor -->
         <section class="panel" id="instructorLiveClassesPanel" style="display: none;">
             <h3>📹 Live Class Scheduling</h3>
+            
+            <!-- Schedule Form -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4>Schedule New Class</h4>
+                <form id="scheduleClassForm" onsubmit="createLiveClass(event)">
+                    <div class="form-group">
+                        <label>Course</label>
+                        <select id="scheduleCourseSelect" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Topic / Title</label>
+                        <input type="text" id="scheduleTitle" placeholder="e.g. Introduction to Calculus" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Zoom / Meeting Link</label>
+                        <input type="url" id="scheduleLink" placeholder="https://zoom.us/j/..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Scheduled At</label>
+                        <input type="datetime-local" id="scheduleTime" required>
+                    </div>
+                    <button type="submit" class="primary-btn">Schedule Class</button>
+                </form>
+            </div>
+
+            <h4>Upcoming Classes</h4>
             <div id="instructorLiveClasses">
                 <p>Loading live classes...</p>
             </div>
         </section>
+
 
 
 

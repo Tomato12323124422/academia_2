@@ -215,27 +215,53 @@ async function loadStudentAttendanceHistory() {
 
 async function loadStudentLiveClasses() {
     try {
-        const res = await fetch(`${API}/attendance/active-sessions`, {
+        // 1. Get Live/Active Sessions
+        const activeRes = await fetch(`${API}/attendance/active-sessions`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
+        const activeData = await activeRes.json();
         
-        const data = await res.json();
+        // 2. Get Upcoming Scheduled Classes
+        const upcomingRes = await fetch(`${API}/live-classes/upcoming`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const upcomingData = await upcomingRes.json();
+        
         const container = document.getElementById("studentLiveClasses");
-        
-        if (res.ok && data.sessions && data.sessions.length > 0) {
-            container.innerHTML = data.sessions.slice(0, 5).map(session => {
-                const startTime = session.start_time || session.date;
-                return `
+        container.innerHTML = "";
+
+        // Render Active Sessions
+        if (activeData.sessions && activeData.sessions.length > 0) {
+            container.innerHTML += "<h4>🔴 Live Now</h4>";
+            container.innerHTML += activeData.sessions.map(session => `
                 <div class="live-class-item live-now">
                     <div class="live-class-info">
                         <h4>${session.course?.title || 'Unknown Course'}</h4>
-                        <p>Started: ${startTime ? new Date(startTime).toLocaleString() : '-'}</p>
+                        <p>Started: ${new Date(session.start_time || session.date).toLocaleString()}</p>
+                        ${session.zoom_link ? `<a href="${session.zoom_link}" target="_blank" class="primary-btn" style="display:inline-block; margin-top:10px; padding: 5px 10px; font-size:12px;">Join Class</a>` : ''}
                     </div>
                     <div><span class="live-badge">LIVE NOW</span></div>
                 </div>
-            `}).join('');
-        } else {
-            container.innerHTML = "<p>No live classes at the moment.</p>";
+            `).join('');
+        }
+
+        // Render Scheduled Sessions
+        if (upcomingData.sessions && upcomingData.sessions.length > 0) {
+            container.innerHTML += "<h4 style='margin-top:20px;'>📅 Upcoming Classes</h4>";
+            container.innerHTML += upcomingData.sessions.map(session => `
+                <div class="live-class-item">
+                    <div class="live-class-info">
+                        <h4>${session.title || 'Live Class'}</h4>
+                        <p>Course: ${session.course?.title || 'Unknown'}</p>
+                        <p>Scheduled: ${new Date(session.date).toLocaleString()}</p>
+                    </div>
+                    <div class="live-badge" style="background: #00ea; color: white;">SCHEDULED</div>
+                </div>
+            `).join('');
+        }
+
+        if (container.innerHTML === "") {
+            container.innerHTML = "<p>No sessions yet.</p>";
         }
         
     } catch (err) {
@@ -466,76 +492,92 @@ async function loadInstructorAnalytics() {
 
 async function loadInstructorLiveClasses() {
     try {
-        const res = await fetch(`${API}/courses/my-courses`, {
+        const res = await fetch(`${API}/live-classes/upcoming`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
         const data = await res.json();
         const container = document.getElementById("instructorLiveClasses");
         
-        if (res.ok && data.courses && data.courses.length > 0) {
-            const allSessions = [];
-            
-            for (const course of data.courses) {
-                try {
-                    const sessionsRes = await fetch(`${API}/attendance/courses/${course.id}/sessions`, {
-                        headers: { "Authorization": `Bearer ${token}` }
-                    });
-                    const sessionsData = await sessionsRes.json();
-                    
-                    if (sessionsData.sessions) {
-                        sessionsData.sessions.forEach(session => {
-                            allSessions.push({ ...session, courseTitle: course.title });
-                        });
-                    }
-                } catch (e) {
-                    console.error("Error loading sessions for course:", course.id);
-                }
-            }
-            
-            allSessions.sort((a, b) => {
-                const timeA = a.start_time || a.date;
-                const timeB = b.start_time || b.date;
-                return new Date(timeB) - new Date(timeA);
-            });
-            
-            if (allSessions.length > 0) {
-                container.innerHTML = allSessions.slice(0, 10).map(session => {
-                    const startTime = session.start_time || session.date;
-                    const endTime = session.end_time;
-                    
-                    let timeDisplay = '';
-                    if (endTime) {
-                        const startDate = new Date(startTime);
-                        const endDate = new Date(endTime);
-                        timeDisplay = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()}`;
-                    } else {
-                        timeDisplay = new Date(startTime).toLocaleString();
-                    }
-                    
-                    return `
-                    <div class="session-item ${!endTime && session.status === 'active' ? 'live-now' : ''}">
-                        <div class="session-info">
-                            <h4>${session.courseTitle}</h4>
-                            <p>${timeDisplay}</p>
-                        </div>
-                        <div>
-                            <span class="status-badge ${!endTime && session.status === 'active' ? 'status-active' : 'status-ended'}">
-                                ${!endTime && session.status === 'active' ? 'LIVE NOW' : 'ENDED'}
-                            </span>
-                        </div>
+        if (res.ok && data.sessions && data.sessions.length > 0) {
+            container.innerHTML = data.sessions.map(session => {
+                const date = new Date(session.date);
+                return `
+                <div class="session-item" style="border-left: 4px solid #00ea;">
+                    <div class="session-info">
+                        <h4>${session.title || 'Live Class'}</h4>
+                        <p>Course: ${session.course?.title || 'Unknown'}</p>
+                        <p>Scheduled: ${date.toLocaleString()}</p>
+                        <p>Link: <a href="${session.zoom_link}" target="_blank">${session.zoom_link}</a></p>
                     </div>
-                `}).join('');
-            } else {
-                container.innerHTML = "<p>No sessions yet. Start a class from your courses!</p>";
-            }
+                    <div>
+                        <span class="status-badge" style="background: #00ea; color: white;">SCHEDULED</span>
+                    </div>
+                </div>
+            `}).join('');
         } else {
-            container.innerHTML = "<p>No courses to show sessions for.</p>";
+            container.innerHTML = "<p>No upcoming scheduled classes.</p>";
         }
         
     } catch (err) {
-        console.error("Error loading live classes:", err);
-        document.getElementById("instructorLiveClasses").innerHTML = "<p>Error loading live classes.</p>";
+        console.error("Error loading scheduled classes:", err);
+        document.getElementById("instructorLiveClasses").innerHTML = "<p>Error loading scheduled classes.</p>";
+    }
+}
+
+async function updateScheduleCourseSelect() {
+    const select = document.getElementById("scheduleCourseSelect");
+    if (!select) return;
+
+    try {
+        const res = await fetch(`${API}/courses/my-courses`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.courses) {
+            select.innerHTML = '<option value="">-- Select Course --</option>' + 
+                data.courses.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+        }
+    } catch (err) {
+        console.error("Error loading courses for select:", err);
+    }
+}
+
+async function createLiveClass(e) {
+    e.preventDefault();
+    
+    const course_id = document.getElementById("scheduleCourseSelect").value;
+    const title = document.getElementById("scheduleTitle").value;
+    const zoom_link = document.getElementById("scheduleLink").value;
+    const scheduled_at = document.getElementById("scheduleTime").value;
+
+    if (!course_id || !title || !zoom_link || !scheduled_at) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/live-classes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ course_id, title, zoom_link, scheduled_at })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert("Class scheduled successfully!");
+            document.getElementById("scheduleClassForm").reset();
+            loadInstructorLiveClasses();
+        } else {
+            alert(data.message || "Failed to schedule class");
+        }
+    } catch (err) {
+        console.error("Error scheduling class:", err);
+        alert("Network error - check your connection");
     }
 }
 
@@ -552,6 +594,7 @@ function showInstructorAnalytics() {
 function showInstructorLiveClasses() {
     hideAllPanels();
     document.getElementById("instructorLiveClassesPanel").style.display = "block";
+    updateScheduleCourseSelect();
     loadInstructorLiveClasses();
 }
 

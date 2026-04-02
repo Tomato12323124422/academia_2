@@ -12,6 +12,7 @@ const gradesRoutes = require('./routes/grades');
 const guardianRoutes = require('./routes/guardian');
 const adminRoutes = require('./routes/admin');
 const quizzesRoutes = require('./routes/quizzes');
+const liveclassesRoutes = require('./routes/liveclasses');
 
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/grades', gradesRoutes);
 app.use('/api/guardian', guardianRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/quizzes', quizzesRoutes);
+app.use('/api/live-classes', liveclassesRoutes);
 
 
 // Health check endpoint

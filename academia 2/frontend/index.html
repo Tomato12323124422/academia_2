@@ -1,47 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#667eea">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maseno University - Virtual Learning Platform</title>
     <link rel="manifest" href="manifest.json">
-<title>MASENO UNIVERSITY LMS</title>
-<link rel="stylesheet" href="CSS/modern-theme.css">
-    <link rel="stylesheet" href="CSS/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/kcau-theme.css">
+    <meta name="theme-color" content="#1e3a8a">
 </head>
 <body>
-
-<div class="landing-container">
-    <img src="assets/logo.png" alt="MASENO UNIVERSITY LMS Logo" class="logo">
-
-    
-    <h1>MASENO UNIVERSITY LMS</h1>
-
-    <p class="tagline">Your Complete Learning Management System</p>
-    
-    <div class="features">
-        <div class="feature">
-            <h3>📚 Course Management</h3>
-            <p>Create and manage courses with ease</p>
+    <main class="hero fade-in-up">
+        <div class="hero-content">
+            <h1>Maseno University</h1>
+            <p class="hero-subtitle">Virtual Learning Platform<br>Access courses, attendance, grades and more from anywhere</p>
+            
+            <div class="auth-buttons">
+                <a href="login.html" class="btn-hero btn-login">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 7V3H9v4H3v14h12v-4h4V7h-4zM9 5h6v2H9V5zM5 9h10v10H5V9zm10 4v2h2v-2h-2z" fill="currentColor"/>
+                    </svg>
+                    Login
+                </a>
+                <a href="register.html" class="btn-hero btn-register">
+                    Sign Up
+                </a>
+            </div>
         </div>
-        <div class="feature">
-            <h3>📱 QR Attendance</h3>
-            <p>Smart attendance tracking with QR codes</p>
-        </div>
-        <div class="feature">
-            <h3>🏆 Gamification</h3>
-            <p>Earn XP points and badges for progress</p>
-        </div>
-        <div class="feature">
-            <h3>📹 Live Classes</h3>
-            <p>Join virtual classes in real-time</p>
-        </div>
-    </div>
-    
-    <div class="buttons">
-        <a href="login.html" class="btn btn-primary">Login</a>
-        <a href="register.html" class="btn btn-secondary">Register</a>
-    </div>
-</div>
+    </main>
 
+    <section class="features">
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3>Course Management</h3>
+                <p>Browse, enroll and access all your courses with complete learning materials, assignments and quizzes.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">✅</div>
+                <h3>Smart Attendance</h3>
+                <p>QR code based attendance system for fast, accurate and real-time attendance tracking.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Gamification</h3>
+                <p>Earn XP points, badges and compete on leaderboards as you progress through your courses.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📹</div>
+                <h3>Live Classes</h3>
+                <p>Join real-time virtual classes with Zoom integration and interactive session management.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Smooth scroll and animations
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animate hero elements
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.feature-card').forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                observer.observe(card);
+            });
+        });
+    </script>
 </body>
 </html>

@@ -8,7 +8,7 @@ const coursesRoutes = require('./routes/courses');
 const attendanceRoutes = require('./routes/attendance');
 const assignmentsRoutes = require('./routes/assignments');
 const gradesRoutes = require('./routes/grades');
-const gamificationRoutes = require('./routes/gamification');
+
 const guardianRoutes = require('./routes/guardian');
 const adminRoutes = require('./routes/admin');
 const quizzesRoutes = require('./routes/quizzes');
@@ -38,7 +38,7 @@ app.use('/api/courses', coursesRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assignments', assignmentsRoutes);
 app.use('/api/grades', gradesRoutes);
-app.use('/api/gamification', gamificationRoutes);
+
 app.use('/api/guardian', guardianRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/quizzes', quizzesRoutes);

@@ -28,7 +28,6 @@ if (user.role === "student") {
         <li onclick="showStudentAttendance()">📋 Attendance</li>
         <li onclick="showStudentLiveClasses()">📹 Live Classes</li>
         <li onclick="showStudentQuizzes()">📝 Quizzes</li>
-        <li onclick="showStudentLeaderboard()">🏆 Leaderboard</li>
     `;
     loadStudentDashboard();
 }
@@ -40,7 +39,6 @@ if (user.role === "teacher") {
         <li onclick="showMyCourses()">📚 My Courses</li>
         <li onclick="showInstructorLiveClasses()">📹 Live Classes</li>
         <li onclick="showInstructorAnalytics()">📈 Analytics</li>
-        <li onclick="showInstructorLeaderboard()">🏆 Leaderboard</li>
         <li onclick="showTeacherSessionPanel()">📱 Attendance QR</li>
         <li onclick="showInstructorQuizzes()">📝 Manage Quizzes</li>
         <li onclick="window.location.href='students.html'">👨‍🎓 Students</li>
@@ -63,7 +61,6 @@ async function loadStudentDashboard() {
     document.getElementById("studentDeadlinesPanel").style.display = "block";
     document.getElementById("studentAttendanceHistoryPanel").style.display = "block";
     document.getElementById("studentLiveClassesPanel").style.display = "block";
-    document.getElementById("studentLeaderboardPanel").style.display = "block";
     document.getElementById("studentCoursesPanel").style.display = "block";
     document.getElementById("studentAttendancePanel").style.display = "block";
     
@@ -73,23 +70,12 @@ async function loadStudentDashboard() {
         loadStudentDeadlines(),
         loadStudentAttendanceHistory(),
         loadStudentLiveClasses(),
-        loadStudentLeaderboard(),
         loadStudentQuizzes()
     ]);
 }
 
 async function loadStudentStats() {
     try {
-        const statsRes = await fetch(`${API}/gamification/stats`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        
-        if (statsRes.ok) {
-            const statsData = await statsRes.json();
-            document.getElementById("xp").innerText = statsData.stats?.xp || 0;
-            document.getElementById("badges").innerText = statsData.stats?.badges_earned || 0;
-        }
-        
         const coursesRes = await fetch(`${API}/courses/enrolled`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -258,37 +244,7 @@ async function loadStudentLiveClasses() {
     }
 }
 
-async function loadStudentLeaderboard() {
-    try {
-        const res = await fetch(`${API}/gamification/leaderboard`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
-        const container = document.getElementById("leaderboardBody");
-        
-        if (res.ok && data.leaderboard && data.leaderboard.length > 0) {
-            container.innerHTML = data.leaderboard.slice(0, 10).map((entry, index) => {
-                const rankClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '';
-                const level = Math.floor(Math.sqrt(entry.xp / 100)) + 1;
-                return `
-                    <tr class="${rankClass}">
-                        <td>${index + 1}</td>
-                        <td>${entry.user?.full_name || 'Unknown'}</td>
-                        <td>${entry.xp}</td>
-                        <td>${level}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            container.innerHTML = "<tr><td colspan='4'>No leaderboard data yet.</td></tr>";
-        }
-        
-    } catch (err) {
-        console.error("Error loading leaderboard:", err);
-        document.getElementById("leaderboardBody").innerHTML = "<tr><td colspan='4'>Error loading leaderboard.</td></tr>";
-    }
-}
+
 
 function showStudentDashboard() {
     loadStudentDashboard();
@@ -425,7 +381,6 @@ async function loadInstructorDashboard() {
     
     document.getElementById("instructorAnalyticsPanel").style.display = "block";
     document.getElementById("instructorLiveClassesPanel").style.display = "block";
-    document.getElementById("instructorLeaderboardPanel").style.display = "block";
     document.getElementById("teacherSessionPanel").style.display = "block";
     document.getElementById("attendanceListPanel").style.display = "block";
     document.getElementById("myCoursesPanel").style.display = "block";
@@ -435,7 +390,6 @@ async function loadInstructorDashboard() {
         loadMyCourses(),
         loadInstructorAnalytics(),
         loadInstructorLiveClasses(),
-        loadInstructorLeaderboard(),
         loadTeacherQuizzes(),
         checkActiveSession()
     ]);
@@ -452,10 +406,6 @@ async function loadInstructorStats() {
         if (res.ok) {
             document.getElementById("courseCount").innerText = data.courses?.length || 0;
         }
-        
-        document.getElementById("xp").innerText = "-";
-        document.getElementById("badges").innerText = "-";
-        document.getElementById("attendance").innerText = "-";
         
     } catch (err) {
         console.error("Error loading instructor stats:", err);
@@ -589,39 +539,6 @@ async function loadInstructorLiveClasses() {
     }
 }
 
-async function loadInstructorLeaderboard() {
-    try {
-        const res = await fetch(`${API}/gamification/leaderboard`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
-        const container = document.getElementById("instructorLeaderboardBody");
-        
-        if (res.ok && data.leaderboard && data.leaderboard.length > 0) {
-            container.innerHTML = data.leaderboard.slice(0, 10).map((entry, index) => {
-                const rankClass = index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '';
-                const level = Math.floor(Math.sqrt(entry.xp / 100)) + 1;
-                return `
-                    <tr class="${rankClass}">
-                        <td>${index + 1}</td>
-                        <td>${entry.user?.full_name || 'Unknown'}</td>
-                        <td>${entry.xp}</td>
-                        <td>${level}</td>
-                        <td>${entry.badges_earned || 0}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            container.innerHTML = "<tr><td colspan='5'>No leaderboard data yet.</td></tr>";
-        }
-        
-    } catch (err) {
-        console.error("Error loading leaderboard:", err);
-        document.getElementById("instructorLeaderboardBody").innerHTML = "<tr><td colspan='5'>Error loading leaderboard.</td></tr>";
-    }
-}
-
 function showInstructorDashboard() {
     loadInstructorDashboard();
 }
@@ -656,7 +573,6 @@ async function loadGuardianDashboard() {
     document.getElementById("guardianGradesPanel").style.display = "block";
     document.getElementById("guardianAttendancePanel").style.display = "block";
     document.getElementById("guardianAssignmentsPanel").style.display = "block";
-    document.getElementById("guardianAchievementsPanel").style.display = "block";
     
     await loadGuardianChildren();
 }

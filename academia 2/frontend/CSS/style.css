@@ -7,22 +7,37 @@
 }
 
 :root {
-  --maseno-primary: #0033A0;
-  --maseno-primary-dark: #001F5B;
-  --maseno-gold: #FFD700;
-  --maseno-gold-dark: #D4AF37;
-  --bg-primary: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+  /* Updated to authentic Maseno University green/gold */
+  --maseno-green: #006847;
+  --maseno-green-dark: #004D40;
+  --maseno-green-light: #A8D5BA;
+  --maseno-gold: #FDB813;
+  --maseno-gold-dark: #E6A700;
+  --bg-primary: linear-gradient(135deg, #F8FCFA 0%, #E8F5E8 100%);
   --card-bg: #FFFFFF;
-  --surface: #F1F5F9;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --border: #E2E8F0;
-  --shadow-soft: 0 4px 20px rgba(0, 51, 160, 0.08);
-  --shadow-hover: 0 12px 40px rgba(0, 51, 160, 0.15);
+  --surface: #F0F9F0;
+  --text-primary: #0F2E1D;
+  --text-secondary: #4D5E53;
+  --border: #D1E7D4;
+  --shadow-soft: 0 4px 20px rgba(0, 104, 71, 0.08);
+  --shadow-hover: 0 12px 40px rgba(0, 104, 71, 0.15);
   --success: #10B981;
   --warning: #F59E0B;
   --danger: #EF4444;
   --radius: 16px;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, var(--maseno-green) 0%, var(--maseno-green-dark) 100%);
+}
+
+.card p {
+  color: var(--maseno-green);
+}
+
+.menu a.active {
+  background: var(--maseno-gold);
+  color: var(--maseno-green-dark);
 }
 
 body {

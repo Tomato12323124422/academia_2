@@ -7,10 +7,10 @@
 }
 
 :root {
-  --maseno-primary: #0033A0;
-  --maseno-primary-dark: #001F5B;
-  --maseno-gold: #FFD700;
-  --maseno-gold-dark: #D4AF37;
+--maseno-green: #006847;
+  --maseno-green-dark: #004D40;
+  --maseno-gold: #FDB813;
+  --maseno-gold-dark: #E6A700;
   --bg-glass: rgba(255, 255, 255, 0.1);
   --text-white: #FFFFFF;
   --text-light: #F1F5F9;

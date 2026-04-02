@@ -507,7 +507,7 @@ async function viewCourse(courseId) {
                             <tr>
                                 <td>${e.student?.full_name || 'Unknown'}</td>
                                 <td>${e.student?.email || 'N/A'}</td>
-                                <td>${new Date(e.enrolled_at).toLocaleDateString()}</td>
+                                 <td>${e.enrolled_at ? new Date(e.enrolled_at).toLocaleDateString() : 'N/A'}</td>
                             </tr>
                         `).join('') : '<tr><td colspan="3" class="empty-state">No students enrolled</td></tr>'}
                     </tbody>
@@ -699,7 +699,7 @@ function renderEnrollments(enrollments) {
     }
 
     tbody.innerHTML = enrollments.map(e => {
-        const enrolled = new Date(e.enrolled_at).toLocaleDateString();
+        const enrolled = e.enrolled_at ? new Date(e.enrolled_at).toLocaleDateString() : 'N/A';
         return `
             <tr>
                 <td><strong>${e.student?.full_name || 'Unknown'}</strong></td>

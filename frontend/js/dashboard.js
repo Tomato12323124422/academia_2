@@ -1201,8 +1201,11 @@ async function refreshAttendance() {
             const attendanceList = document.getElementById("attendanceList");
             if (data.attendance && data.attendance.length > 0) {
                 attendanceList.innerHTML = data.attendance.map(record => `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-                        <span>${record.student?.full_name || record.name || 'Unknown'}</span>
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${record.student?.full_name || record.name || 'Unknown'}</strong>
+                            ${record.reg_no ? `<br><small style="color: #666;">Reg No: ${record.reg_no}</small>` : ''}
+                        </div>
                         <span style="color: #28a745; font-weight: bold;">✓ Present</span>
                     </div>
                 `).join('');
@@ -1272,6 +1275,7 @@ async function viewCourseStudents(courseId) {
                         <div>
                             <strong>#${index + 1} ${enrollment.student?.full_name || 'Unknown'}</strong>
                             <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">${enrollment.student?.email || 'No email'}</p>
+                            <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Enrolled: ${enrollment.enrolled_at ? new Date(enrollment.enrolled_at).toLocaleDateString() : 'N/A'}</p>
                         </div>
                         <span style="color: #28a745; font-size: 12px;">✓ Enrolled</span>
                     </div>

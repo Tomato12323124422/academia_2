@@ -106,6 +106,12 @@ router.post('/sessions', authMiddleware, async (req, res) => {
         // Get local time for start_time
         const now = new Date();
         
+        const { data: courseData } = await supabase
+            .from('courses')
+            .select('title')
+            .eq('id', course_id)
+            .single();
+
         const { data, error } = await supabase
             .from('sessions')
             .insert([{
@@ -115,6 +121,7 @@ router.post('/sessions', authMiddleware, async (req, res) => {
                 start_time: now.toISOString(),
                 end_time: null,
                 zoom_link: zoom_link || '',
+                topic: (courseData?.title || 'Class Session') + ' - ' + now.toLocaleDateString(),
                 status: 'active',
                 created_at: now.toISOString()
             }])
@@ -155,10 +162,8 @@ router.get('/sessions/:id/qr', authMiddleware, async (req, res) => {
         }
 
 
-        // Generate dynamic QR code with rotating token
-        // Point to frontend page where students will mark attendance
         const token = generateToken();
-        const qrData = `${SERVER_URL}/attendance-scan-result.html?session=${req.params.id}&token=${token}`;
+        const qrData = `${SERVER_URL}/attendance-form.html?session=${req.params.id}&token=${token}`;
         const qrCodeDataUrl = await QRCode.toDataURL(qrData);
 
 

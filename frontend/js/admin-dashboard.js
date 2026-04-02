@@ -61,12 +61,17 @@ function logout() {
 }
 
 // Panel Navigation
-function showPanel(panelName) {
+function showPanel(panelName, clickedElement) {
     // Update nav items
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
-    event.target.closest('.nav-item').classList.add('active');
+    
+    // Find and activate the clicked nav item
+    if (clickedElement) {
+        const navItem = clickedElement.closest ? clickedElement.closest('.nav-item') : clickedElement;
+        if (navItem) navItem.classList.add('active');
+    }
 
     // Hide all panels
     document.querySelectorAll('.content-panel').forEach(panel => {
@@ -74,7 +79,8 @@ function showPanel(panelName) {
     });
 
     // Show selected panel
-    document.getElementById(`${panelName}Panel`).classList.add('active');
+    const targetPanel = document.getElementById(`${panelName}Panel`);
+    if (targetPanel) targetPanel.classList.add('active');
 
     // Update page title
     const titles = {
@@ -85,7 +91,7 @@ function showPanel(panelName) {
         attendance: 'Attendance Reports',
         reports: 'System Reports'
     };
-    document.getElementById('pageTitle').textContent = titles[panelName];
+    document.getElementById('pageTitle').textContent = titles[panelName] || 'Dashboard';
 
     // Load panel data
     switch(panelName) {

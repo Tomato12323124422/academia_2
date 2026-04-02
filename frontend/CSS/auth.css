@@ -7,12 +7,12 @@
 }
 
 :root {
-  --primary: #0A2A66;
-  --secondary: #F4C542;
-  --bg-light: #F2F2F2;
+  --primary: #006738;
+  --secondary: #65C1CF;
+  --bg-light: #F4F7F6;
   --bg-card: #FFFFFF;
-  --text-primary: #000000;
-  --text-secondary: #333333;
+  --text-primary: #1A2B23;
+  --text-secondary: #4A5D54;
 }
 
 
@@ -21,7 +21,7 @@ body{
     display:flex;
     justify-content:center;
     align-items:center;
-    background:linear-gradient(135deg, var(--primary), #1a4066);
+    background:linear-gradient(135deg, var(--primary), #004d2a);
 }
 
 
@@ -77,7 +77,7 @@ body{
 
 
 .auth-container button:hover{
-    background:rgba(10,42,102,0.9);
+    background:rgba(0,103,56,0.9);
 }
 
 

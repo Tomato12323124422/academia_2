@@ -338,97 +338,94 @@ router.get('/enrollments', (req, res) => {
 
 async function handleEnrollmentsQuery(req, res, isTestMode) {
   try {
-    try {
-        const { course_id, student_id } = req.query;
-        
-        let enrollmentsQuery = supabase
-            .from('enrollments')
-            .select('*')
-            .order('enrolled_at', { ascending: false });
+    const { course_id, student_id } = req.query;
+    
+    let enrollmentsQuery = supabase
+        .from('enrollments')
+        .select('*')
+        .order('enrolled_at', { ascending: false });
 
-        if (course_id) enrollmentsQuery = enrollmentsQuery.eq('course_id', course_id);
-        if (student_id) enrollmentsQuery = enrollmentsQuery.eq('student_id', student_id);
+    if (course_id) enrollmentsQuery = enrollmentsQuery.eq('course_id', course_id);
+    if (student_id) enrollmentsQuery = enrollmentsQuery.eq('student_id', student_id);
 
-        const { data: enrollments, error: enrollError } = await enrollmentsQuery;
+    const { data: enrollments, error: enrollError } = await enrollmentsQuery;
 
-        if (enrollError) {
-        if (enrollError) {
-          console.error('[ENROLLMENTS QUERY ERROR]', enrollError);
-          
-          // Categorize Supabase errors
-          if (enrollError.code === 'PGRST116') {
-            return res.status(200).json({ enrollments: [], count: 0, note: 'No enrollments found' });
-          }
-          if (enrollError.message.includes('permission')) {
-            return res.status(403).json({ 
-              error: 'RLS_VIOLATION',
-              message: 'Insufficient permissions on enrollments table' 
-            });
-          }
-          
-          return res.status(500).json({ 
-            error: 'SUPABASE_QUERY_ERROR',
-            message: enrollError.message,
-            code: enrollError.code
-          });
+    if (enrollError) {
+      console.error('[ENROLLMENTS QUERY ERROR]', enrollError);
+      
+      // Categorize Supabase errors
+      if (enrollError.code === 'PGRST116') {
+        return res.status(200).json({ enrollments: [], count: 0, note: 'No enrollments found' });
+      }
+      if (enrollError.message.includes('permission')) {
+        return res.status(403).json({ 
+          error: 'RLS_VIOLATION',
+          message: 'Insufficient permissions on enrollments table' 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: 'SUPABASE_QUERY_ERROR',
+        message: enrollError.message,
+        code: enrollError.code
+      });
+    }
+
+    // Return empty array if no enrollments
+    if (!enrollments || enrollments.length === 0) {
+        return res.json({ enrollments: [], count: 0 });
+    }
+
+    // Get unique student and course IDs
+    const studentIds = [...new Set(enrollments.map(e => e.student_id).filter(Boolean))];
+    const courseIds = [...new Set(enrollments.map(e => e.course_id).filter(Boolean))];
+
+    // Fetch students if we have any
+    let studentsData = [];
+    if (studentIds.length > 0) {
+        try {
+            const { data: students } = await supabase
+                .from('users')
+                .select('id, full_name, email')
+                .in('id', studentIds);
+            studentsData = students || [];
+        } catch (e) {
+            console.error('Error fetching students:', e);
         }
+    }
+
+    // Fetch courses if we have any
+    let coursesData = [];
+    if (courseIds.length > 0) {
+        try {
+            const { data: courses } = await supabase
+                .from('courses')
+                .select('id, title, teacher_id')
+                .in('id', courseIds);
+            coursesData = courses || [];
+        } catch (e) {
+            console.error('Error fetching courses:', e);
         }
+    }
 
-        // Return empty array if no enrollments
-        if (!enrollments || enrollments.length === 0) {
-            return res.json({ enrollments: [], count: 0 });
-        }
+    // Create maps for quick lookup
+    const studentMap = {};
+    studentsData.forEach(s => { studentMap[s.id] = s; });
+    
+    const courseMap = {};
+    coursesData.forEach(c => { courseMap[c.id] = c; });
 
-        // Get unique student and course IDs
-        const studentIds = [...new Set(enrollments.map(e => e.student_id).filter(Boolean))];
-        const courseIds = [...new Set(enrollments.map(e => e.course_id).filter(Boolean))];
+    // Format enrollments with student and course data
+    const formattedEnrollments = enrollments.map(e => ({
+        ...e,
+        student: studentMap[e.student_id] || null,
+        course: courseMap[e.course_id] || null
+    })).filter(e => e.student && e.course);
 
-        // Fetch students if we have any
-        let studentsData = [];
-        if (studentIds.length > 0) {
-            try {
-                const { data: students } = await supabase
-                    .from('users')
-                    .select('id, full_name, email')
-                    .in('id', studentIds);
-                studentsData = students || [];
-            } catch (e) {
-                console.error('Error fetching students:', e);
-            }
-        }
+    return res.json({ enrollments: formattedEnrollments, count: formattedEnrollments.length });
 
-        // Fetch courses if we have any
-        let coursesData = [];
-        if (courseIds.length > 0) {
-            try {
-                const { data: courses } = await supabase
-                    .from('courses')
-                    .select('id, title, teacher_id')
-                    .in('id', courseIds);
-                coursesData = courses || [];
-            } catch (e) {
-                console.error('Error fetching courses:', e);
-            }
-        }
-
-        // Create maps for quick lookup
-        const studentMap = {};
-        studentsData.forEach(s => { studentMap[s.id] = s; });
-        
-        const courseMap = {};
-        coursesData.forEach(c => { courseMap[c.id] = c; });
-
-        // Format enrollments with student and course data
-        const formattedEnrollments = enrollments.map(e => ({
-            ...e,
-            student: studentMap[e.student_id] || null,
-            course: courseMap[e.course_id] || null
-        })).filter(e => e.student && e.course); // Only include enrollments with valid student and course
-
-        res.json({ enrollments: formattedEnrollments, count: formattedEnrollments.length });
-
-    // Check Supabase connection first
-    console.log('[ENROLLMENTS] Querying database...');
+  } catch (err) {
+    console.error('[ENROLLMENTS ERROR] Full error:', err);
     
     // Enhanced error categorization
     if (err.message.includes('relation')) {
@@ -441,22 +438,21 @@ async function handleEnrollmentsQuery(req, res, isTestMode) {
     if (err.message.includes('permission denied') || err.code === '42501') {
       return res.status(500).json({ 
         error: 'DATABASE_RLS_BLOCKED',
-        message: 'RLS policy blocking access. Use service_role key or update policies',
+        message: 'RLS policy blocking access.',
         details: err.message 
       });
     }
     if (err.message.includes('connection') || err.message.includes('network')) {
       return res.status(500).json({ 
         error: 'DATABASE_CONNECTION_FAILED', 
-        message: 'Supabase connection failed. Check SUPABASE_URL/KEY env vars on Render',
+        message: 'Supabase connection failed. Check SUPABASE_URL/KEY env vars.',
         details: err.message 
       });
     }
     
-    console.error('[ENROLLMENTS ERROR] Full error:', err);
     res.status(500).json({ 
       error: 'INTERNAL_SERVER_ERROR',
-      message: 'Enrollment loading failed. Check server logs.',
+      message: 'Enrollment loading failed.',
       details: err.message,
       timestamp: new Date().toISOString()
     });

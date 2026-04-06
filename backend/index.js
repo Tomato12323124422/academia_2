@@ -56,24 +56,25 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
+const path = require('path');
+
 // Serve attendance-scan-result.html directly
 app.get('/attendance-scan-result.html', (req, res) => {
-    console.log('Serving attendance-scan-result.html');
-    res.sendFile(path.join(__dirname, '../frontend/attendance-scan-result.html'));
+  console.log('Serving attendance-scan-result.html');
+  res.sendFile(path.join(__dirname, '../frontend/attendance-scan-result.html'));
 });
 
 // Serve attendance-scan.html directly
 app.get('/attendance-scan.html', (req, res) => {
-    console.log('Serving attendance-scan.html');
-    res.sendFile(path.join(__dirname, '../frontend/attendance-scan.html'));
+  console.log('Serving attendance-scan.html');
+  res.sendFile(path.join(__dirname, '../frontend/attendance-scan.html'));
 });
 
 // Serve attendance-form.html directly
 app.get('/attendance-form.html', (req, res) => {
-    console.log('Serving attendance-form.html');
-    res.sendFile(path.join(__dirname, '../frontend/attendance-form.html'));
+  console.log('Serving attendance-form.html');
+  res.sendFile(path.join(__dirname, '../frontend/attendance-form.html'));
 });
-
 // Serve enroll-by-code.html directly
 app.get('/enroll-by-code.html', (req, res) => {
     console.log('Serving enroll-by-code.html');

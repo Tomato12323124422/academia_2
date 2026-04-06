@@ -376,167 +376,55 @@ const sessionIdInt = parseInt(sessionId);
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 // GET SESSION ATTENDANCE (Teacher only)
-router.get('/sessions/:id/attendance', authMiddleware, async (req, res) => {
-    try {
-        // Get session details
-        const { data: session, error: sessionError } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('id', req.params.id);
+router.get('/:id', async (req, res) => {
+  try {
+    // Get session details
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('id', req.params.id);
 
-        if (sessionError || !session || session.length === 0) {
-            return res.status(404).json({ message: 'Session not found' });
-        }
-
-        // Only teacher who created the session can view attendance
-        if (session[0].teacher_id !== req.user.id && req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Not authorized' });
-        }
-
-
-        // Get attendance records
-        const { data: attendance, error } = await supabase
-            .from('attendance')
-            .select(`
-                *,
-                student:users(id, full_name, email)
-            `)
-            .eq('session_id', req.params.id)
-            .order('marked_at', { ascending: false });
-
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        res.json({ 
-            session: session[0],
-            attendance: attendance || [],
-            count: attendance ? attendance.length : 0
-        });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+    if (sessionError || !session || session.length === 0) {
+      return res.status(404).json({ message: 'Session not found' });
     }
-});
 
-// GET ALL ACTIVE SESSIONS (for students to see live classes)
-router.get('/active-sessions', authMiddleware, async (req, res) => {
-    try {
-        // Get all active sessions (Simplified to avoid join errors)
-        const { data: sessions, error } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('status', 'active')
-            .order('date', { ascending: false });
-
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        res.json({ sessions: sessions || [] });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+    // Only teacher who created the session or admin can view attendance
+    if (session[0].teacher_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
-});
 
-// GET COURSE ATTENDANCE ANALYTICS
-router.get('/courses/:id/analytics', authMiddleware, async (req, res) => {
-    try {
-        const courseId = req.params.id;
+    // Get attendance records
+    const { data: attendance, error } = await supabase
+      .from('attendance')
+      .select(`
+        *,
+        student:users(id, full_name, email, reg_no)
+      `)
+      .eq('session_id', req.params.id)
+      .order('marked_at', { ascending: false });
 
-        // Verify teacher owns the course
-        if (req.user.role === 'teacher') {
-            const { data: course, error: courseError } = await supabase
-                .from('courses')
-                .select('*')
-                .eq('id', courseId)
-                .eq('teacher_id', req.user.id);
-
-            if (courseError || !course || course.length === 0) {
-                return res.status(403).json({ message: 'Not authorized' });
-            }
-        }
-
-        // Get all sessions for this course
-        const { data: sessions, sessionsError } = await supabase
-            .from('sessions')
-            .select('id')
-            .eq('course_id', courseId);
-
-        if (sessionsError) {
-            return res.status(500).json({ message: sessionsError.message });
-        }
-
-        const sessionIds = sessions?.map(s => s.id) || [];
-        const totalSessions = sessionIds.length;
-
-        // Get total enrolled students
-        const { count: totalStudents } = await supabase
-            .from('enrollments')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', courseId);
-
-        // Get attendance records
-        let presentCount = 0;
-        let totalAttendance = 0;
-
-        if (sessionIds.length > 0) {
-            const { data: attendance, attendError } = await supabase
-                .from('attendance')
-                .select('status')
-                .in('session_id', sessionIds);
-
-            if (!attendError && attendance) {
-                totalAttendance = attendance.length;
-                presentCount = attendance.filter(a => a.status === 'present').length;
-            }
-        }
-
-        const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
-
-        res.json({
-            analytics: {
-                total_sessions: totalSessions,
-                total_students: totalStudents || 0,
-                total_attendance_records: totalAttendance,
-                present_count: presentCount,
-                absent_count: totalAttendance - presentCount,
-                attendance_rate: attendanceRate
-            }
-        });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+    if (error) {
+      return res.status(500).json({ message: error.message });
     }
+
+    // ✅ Added: return count of present students
+    const presentCount = attendance
+      ? attendance.filter(a => a.status === 'present').length
+      : 0;
+
+    res.json({
+      session: session[0],
+      attendance: attendance || [],
+      total_count: attendance ? attendance.length : 0,
+      present_count: presentCount,
+      absent_count: attendance ? attendance.length - presentCount : 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
-
-// GET COURSE SESSIONS
-router.get('/courses/:id/sessions', authMiddleware, async (req, res) => {
-    try {
-        const { data: sessions, error } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('course_id', req.params.id)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            return res.status(500).json({ message: error.message });
-        }
-
-        res.json({ sessions: sessions || [] });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
 // END SESSION (Teacher only)
 router.patch('/sessions/:id/end', authMiddleware, async (req, res) => {
     try {

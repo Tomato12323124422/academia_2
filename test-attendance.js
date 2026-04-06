@@ -49,9 +49,9 @@ async function runTests() {
     console.log("1. Registering Teacher...");
     let result = await apiCall('/auth/register', 'POST', testTeacher);
     if (result.status === 200 || result.data.message?.includes('already exists')) {
-        console.log("✅ Teacher registered or already exists");
+        console.log("Teacher registered or already exists");
     } else {
-        console.log("❌ Teacher registration failed:", result.data);
+        console.log("Teacher registration failed:", result.data);
     }
     
     // 2. Login Teacher
@@ -62,9 +62,9 @@ async function runTests() {
     });
     if (result.status === 200 && result.data.token) {
         teacherToken = result.data.token;
-        console.log("✅ Teacher logged in, token received");
+        console.log("Teacher logged in, token received");
     } else {
-        console.log("❌ Teacher login failed:", result.data);
+        console.log("Teacher login failed:", result.data);
         return;
     }
     
@@ -72,9 +72,9 @@ async function runTests() {
     console.log("\n3. Registering Student...");
     result = await apiCall('/auth/register', 'POST', testStudent);
     if (result.status === 200 || result.data.message?.includes('already exists')) {
-        console.log("✅ Student registered or already exists");
+        console.log("Student registered or already exists");
     } else {
-        console.log("❌ Student registration failed:", result.data);
+        console.log("Student registration failed:", result.data);
     }
     
     // 4. Login Student
@@ -85,9 +85,9 @@ async function runTests() {
     });
     if (result.status === 200 && result.data.token) {
         studentToken = result.data.token;
-        console.log("✅ Student logged in, token received");
+        console.log("Student logged in, token received");
     } else {
-        console.log("❌ Student login failed:", result.data);
+        console.log("Student login failed:", result.data);
         return;
     }
     
@@ -102,40 +102,21 @@ async function runTests() {
     
     if (result.status === 201 || result.status === 200) {
         courseId = result.data.course?.id || result.data.courses?.[0]?.id;
-        console.log("✅ Course created, ID:", courseId);
+        console.log("Course created, ID:", courseId);
     } else {
-        console.log("❌ Course creation failed:", result.data);
+        console.log("Course creation failed:", result.data);
         // Try to get existing courses
         result = await apiCall('/courses/my-courses', 'GET', null, teacherToken);
         if (result.data.courses && result.data.courses.length > 0) {
             courseId = result.data.courses[0].id;
-            console.log("✅ Using existing course, ID:", courseId);
+            console.log("Using existing course, ID:", courseId);
         } else {
             return;
         }
     }
     
-    // *** NEW STEP 6: Student enrolls in the course ***
-    console.log("\n6. Student enrolling in course...");
-    result = await apiCall('/courses/enroll', 'POST', {
-        course_id: courseId
-    }, studentToken);
-    
-    if (result.status === 200 || result.status === 201) {
-        console.log("✅ Student enrolled in course successfully");
-    } else {
-        console.log("❌ Student enrollment failed:", result.data);
-        // Try alternative enrollment endpoint if exists
-        result = await apiCall(`/courses/${courseId}/enroll`, 'POST', {}, studentToken);
-        if (result.status !== 200 && result.status !== 201) {
-            console.log("❌ Alternative enrollment also failed:", result.data);
-        } else {
-            console.log("✅ Student enrolled via alternative endpoint");
-        }
-    }
-    
-    // 7. Teacher creates a session
-    console.log("\n7. Teacher creating session...");
+    // 6. Teacher creates a session
+    console.log("\n6. Teacher creating session...");
     result = await apiCall('/attendance/sessions', 'POST', {
         course_id: courseId,
         zoom_link: "https://zoom.us/test"
@@ -143,71 +124,65 @@ async function runTests() {
     
     if (result.status === 201) {
         sessionId = result.data.session.id;
-        console.log("✅ Session created, ID:", sessionId);
+        console.log("Session created, ID:", sessionId);
     } else {
-        console.log("❌ Session creation failed:", result.data);
+        console.log("Session creation failed:", result.data);
         return;
     }
     
-    // 8. Wait a moment for session to be active
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 9. Get QR Code
-    console.log("\n9. Getting QR code...");
+    // 7. Get QR Code
+    console.log("\n7. Getting QR code...");
     result = await apiCall(`/attendance/sessions/${sessionId}/qr`, 'GET', null, teacherToken);
     if (result.status === 200 && result.data.qrCode) {
-        console.log("✅ QR code generated successfully");
+        console.log("QR code generated successfully");
         console.log("   QR Data:", result.data.qrData);
     } else {
-        console.log("❌ QR code generation failed:", result.data);
+        console.log("QR code generation failed:", result.data);
     }
     
-    // 10. Student marks attendance
-    console.log("\n10. Student marking attendance...");
+    // 8. Student marks attendance
+    console.log("\n8. Student marking attendance...");
     result = await apiCall('/attendance/attendance', 'POST', {
         session_id: sessionId
     }, studentToken);
     
-    if (result.status === 200 || result.status === 201) {
-        console.log("✅ Attendance marked successfully");
+    if (result.status === 200) {
+        console.log("Attendance marked successfully");
     } else {
-        console.log("❌ Attendance marking failed:", result.data);
-        return;
+        console.log("Attendance marking failed:", result.data);
     }
     
-    // 11. Wait for attendance to be processed
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 12. Teacher views attendance
-    console.log("\n12. Teacher viewing attendance...");
+    // 9. Teacher views attendance
+    console.log("\n9. Teacher viewing attendance...");
     result = await apiCall(`/attendance/sessions/${sessionId}/attendance`, 'GET', null, teacherToken);
     if (result.status === 200) {
-        console.log("✅ Attendance retrieved successfully!");
-        console.log("   Count:", result.data.count || 0);
-        console.log("   Records:", JSON.stringify(result.data.attendance, null, 2));
+        console.log("Attendance retrieved, count:", result.data.count);
+        console.log("   Attendance records:", result.data.attendance);
     } else {
-        console.log("❌ Attendance retrieval failed:", result.data);
+        console.log("Attendance retrieval failed:", result.data);
     }
     
-    // 13. Student views their attendance history
-    console.log("\n13. Student viewing attendance history...");
+    // 10. Student views their attendance history
+    console.log("\n10. Student viewing attendance history...");
     result = await apiCall('/attendance/my-attendance', 'GET', null, studentToken);
     if (result.status === 200) {
-        console.log("✅ Student attendance history retrieved, records:", result.data.attendance?.length || 0);
+        console.log("Student attendance history retrieved, records:", result.data.attendance?.length || 0);
     } else {
-        console.log("❌ Attendance history retrieval failed:", result.data);
+        console.log("Attendance history retrieval failed:", result.data);
     }
     
-    // 14. Teacher ends session
-    console.log("\n14. Teacher ending session...");
+    // 11. Teacher ends session
+    console.log("\n11. Teacher ending session...");
     result = await apiCall(`/attendance/sessions/${sessionId}/end`, 'PATCH', {}, teacherToken);
     if (result.status === 200) {
-        console.log("✅ Session ended successfully");
+        console.log("Session ended successfully");
     } else {
-        console.log("❌ Session end failed:", result.data);
+        console.log("Session end failed:", result.data);
     }
     
-    console.log("\n🎉 All tests completed successfully!");
+    console.log("\nAll tests completed!");
 }
 
 runTests().catch(console.error);
+
+

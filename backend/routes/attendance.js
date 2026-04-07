@@ -628,32 +628,37 @@ router.post('/scan/mark', async (req, res) => {
         
         // If name and regNo provided (manual entry)
         if (name && regNo) {
-            // Check for duplicate
-            const { data: existing } = await supabase
-                .from('attendance')
-                .select('*')
-                .eq('session_id', session_id)
-                .eq('reg_no', regNo);
-            
-            if (existing && existing.length > 0) {
-                return res.status(400).json({ message: 'Attendance already marked' });
-            }
-            
-            // Mark attendance with name and regNo
-            const { data, error } = await supabase
-                .from('attendance')
-                .insert([{
-                    session_id,
-                    name: name,
-                    reg_no: regNo,
-                    status: 'present',
-                    marked_at: new Date().toISOString()
-                }]);
-            
-            if (error) return res.status(500).json({ message: error.message });
-            
-            return res.json({ message: 'Attendance marked successfully!' });
-        }
+    const { data: existing } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('session_id', sessionIdInt)    // ✅ use the integer
+        .eq('reg_no', regNo);
+    
+    if (existing && existing.length > 0) {
+        return res.status(400).json({ message: 'Attendance already marked' });
+    }
+
+    // ✅ Look up the student's ID by their reg number
+    const { data: student } = await supabase
+        .from('users')
+        .select('id')
+        .eq('reg_no', regNo)
+        .single();
+    
+    const { data, error } = await supabase
+        .from('attendance')
+        .insert([{
+            session_id: sessionIdInt,      // ✅ use the integer
+            student_id: student?.id || null, // ✅ now the dashboard can find this record
+            name: name,
+            reg_no: regNo,
+            status: 'present',
+            marked_at: new Date().toISOString()
+        }]);
+    
+    if (error) return res.status(500).json({ message: error.message });
+    return res.json({ message: 'Attendance marked successfully!' });
+}
         
         return res.status(400).json({ message: 'Either userId or name+regNo required' });
         

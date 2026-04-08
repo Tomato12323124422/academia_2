@@ -249,6 +249,10 @@
             <h3>Class Session</h3>
             <div id="activeSessionInfo" style="display: none;">
                 <p><strong>Session Active</strong></p>
+                <div class="remote-mode-toggle" style="background: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="remoteModeToggle" style="width: 20px; height: 20px; cursor: pointer;">
+                    <label for="remoteModeToggle" style="font-weight: bold; cursor: pointer;">Remote Class Mode (Use Render URL)</label>
+                </div>
                 <p>Students can scan the QR code below to mark attendance</p>
                 <div id="qrCodeDisplay" style="margin: 20px 0; text-align: center;">
                     <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 250px; border: 2px solid #ddd; border-radius: 8px;">

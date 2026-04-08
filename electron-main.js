@@ -13,14 +13,25 @@ try {
 function createWindow() {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
+        width: 1280,
+        height: 850,
+        backgroundColor: '#f8f9fa',
+        show: false, // Don't show until ready
         icon: path.join(__dirname, 'frontend/assets/logo.png'),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         }
+    });
+
+    // Remove the default browser-like menu bar
+    Menu.setApplicationMenu(null);
+    mainWindow.setMenuBarVisibility(false);
+
+    // Show window when content is loaded to avoid flicker
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show();
     });
 
     // Use RENDER_URL if provided, else localhost (dev), else local file

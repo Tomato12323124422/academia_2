@@ -1,5 +1,5 @@
 // Use local server for development, or production URL
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') 
     ? 'http://localhost:5000' 
     : window.location.origin;
 
@@ -1151,7 +1151,16 @@ async function updateQRCode(sessionId) {
         const tokenData = await tokenRes.json();
         
         if (tokenRes.ok) {
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tokenData.qrData)}`;
+            let finalQrData = tokenData.qrData;
+            const isRemoteMode = document.getElementById("remoteModeToggle")?.checked;
+            
+            if (isRemoteMode) {
+                // Force use of Render URL if in remote mode
+                const RENDER_BASE = "https://academia-2-xgdr.onrender.com";
+                finalQrData = `${RENDER_BASE}/attendance-form.html?session=${sessionId}&token=${tokenData.token}`;
+            }
+
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(finalQrData)}`;
             document.getElementById("qrCodeImage").src = qrImageUrl;
             updateCountdown(tokenData.expiresIn);
         } else {

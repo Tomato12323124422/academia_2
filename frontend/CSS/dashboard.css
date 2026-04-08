@@ -4,6 +4,31 @@
     padding:0;
     box-sizing:border-box;
     font-family:"Segoe UI",sans-serif;
+    user-select: none; /* Make it feel like an app */
+    -webkit-user-drag: none; /* Disable image dragging */
+}
+
+input, textarea, [contenteditable="true"] {
+    user-select: text; /* Allow typing in inputs */
+}
+
+/* Custom App Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #006738; /* Match primary color */
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #004d2a;
 }
 
 :root {

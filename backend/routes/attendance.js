@@ -24,10 +24,13 @@ function getServerIP() {
     return 'localhost';
 }
 
-// Use Render URL for production, fallback to local for development
-// Use FRONTEND_URL for production, fallback to local IP for development
-const FRONTEND_URL = process.env.FRONTEND_URL || `http://${getServerIP()}:5000`;
-const SERVER_URL = FRONTEND_URL;
+// Dynamic URL detection
+function getFullURL(req) {
+    // Priority: env var > X-Forwarded-Proto (Render/Proxy) > req.protocol
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
+    const host = req.get('host');
+    return `${protocol}://${host}`;
+}
 
 
 
@@ -165,7 +168,8 @@ router.get('/sessions/:id/qr', authMiddleware, async (req, res) => {
 
 
         const token = generateToken();
-        const qrData = `${SERVER_URL}/attendance-form.html?session=${req.params.id}&token=${token}`;
+        const baseUrl = getFullURL(req);
+        const qrData = `${baseUrl}/attendance-form.html?session=${req.params.id}&token=${token}`;
         const qrCodeDataUrl = await QRCode.toDataURL(qrData);
 
 

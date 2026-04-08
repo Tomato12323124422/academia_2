@@ -88,4 +88,22 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Re-import getServerIP to show helpful message
+const os = require('os');
+function getServerIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) return iface.address;
+        }
+    }
+    return 'localhost';
+}
+
+app.listen(PORT, () => {
+    console.log(`\n🚀 MASENO UNIVERSITY LMS Backend Started`);
+    console.log(`📍 Local:   http://localhost:${PORT}`);
+    console.log(`🌐 Network: http://${getServerIP()}:${PORT}`);
+    console.log(`\nStudents should be on the same Wi-Fi to scan QR codes locally.\n`);
+});

@@ -2,6 +2,14 @@ const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const isDev = !app.isPackaged;
 
+// Start Backend Server
+try {
+    console.log('Starting internal backend server...');
+    require('./backend/index.js');
+} catch (err) {
+    console.error('Failed to start internal backend:', err);
+}
+
 function createWindow() {
     // Create the browser window.
     const mainWindow = new BrowserWindow({

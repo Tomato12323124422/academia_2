@@ -397,6 +397,31 @@ const sessionIdInt = parseInt(sessionId);
         res.status(500).json({ message: 'Server error' });
     }
 });
+// GET ALL ACTIVE SESSIONS FOR TEACHER
+router.get('/active-sessions', authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        const { data: sessions, error } = await supabase
+            .from('sessions')
+            .select(`
+                *,
+                courses(title)
+            `)
+            .eq('teacher_id', req.user.id)
+            .eq('status', 'active');
+
+        if (error) return res.status(500).json({ message: error.message });
+
+        res.json({ sessions: sessions || [] });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // GET COURSE SESSIONS (Teacher only)
 router.get('/courses/:course_id/sessions', authMiddleware, async (req, res) => {
     try {

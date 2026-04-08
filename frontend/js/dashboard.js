@@ -1107,25 +1107,22 @@ async function checkActiveSession() {
     if (user.role !== "teacher") return;
     
     try {
-        const res = await fetch(`${API}/courses/my-courses`, {
+        const res = await fetch(`${API}/attendance/active-sessions`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
         const data = await res.json();
-        if (data.courses && data.courses.length > 0) {
-            for (const course of data.courses) {
-                const sessionsRes = await fetch(`${API}/attendance/courses/${course.id}/sessions`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                const sessionsData = await sessionsRes.json();
-                
-                const activeSession = sessionsData.sessions?.find(s => s.status === 'active');
-                if (activeSession) {
-                    currentSessionId = activeSession.id;
-                    showActiveSession(currentSessionId);
-                    return;
-                }
-            }
+        if (data.sessions && data.sessions.length > 0) {
+            // Use the most recent active session
+            const activeSession = data.sessions[0];
+            currentSessionId = activeSession.id;
+            
+            // Update UI to show which course is active
+            const courseTitle = activeSession.courses?.title || "Class Session";
+            const sessionTitleElement = document.querySelector("#activeSessionInfo p strong");
+            if (sessionTitleElement) sessionTitleElement.innerText = `Active Session: ${courseTitle}`;
+            
+            showActiveSession(currentSessionId);
         }
     } catch (err) {
         console.error("Error checking active session:", err);

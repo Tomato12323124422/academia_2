@@ -266,7 +266,7 @@
         
         try {
             // Verify the session and token
-            const res = await fetch(`${API}/attendance/scan?session=${sessionId}&token=${token}`);
+            const res = await fetch(`${API}/attendance/verify?session=${sessionId}&token=${token}`);
             const data = await res.json();
             
             if (!res.ok) {

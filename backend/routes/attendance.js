@@ -597,6 +597,39 @@ router.get('/my-attendance', authMiddleware, async (req, res) => {
     }
 });
 
+// VERIFY SESSION FOR FORM
+router.get('/verify', async (req, res) => {
+    try {
+        const { session: sessionId, token } = req.query;
+        if (!sessionId || !token) return res.status(400).json({ message: 'Missing session or token' });
+
+        if (!isValidToken(token)) {
+            return res.status(400).json({ message: 'QR code has expired.', expired: true });
+        }
+
+        const sessionIdInt = parseInt(sessionId, 10);
+        const { data: session, error } = await supabase
+            .from('sessions')
+            .select('*, courses(title)')
+            .eq('id', sessionIdInt)
+            .eq('status', 'active');
+
+        if (error || !session || session.length === 0) {
+            return res.status(404).json({ message: 'Session not found or not active' });
+        }
+
+        res.json({
+            valid: true,
+            sessionId: sessionIdInt,
+            token: token,
+            course: session[0].courses?.title || 'Unknown Course'
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // SCAN QR CODE - Student visits this URL from QR scan
 router.get('/scan', async (req, res) => {
     try {
@@ -629,13 +662,7 @@ router.get('/scan', async (req, res) => {
         }
         
         // Return session info and token for attendance marking
-        res.json({
-            valid: true,
-            sessionId: sessionIdInt,
-            token: token,
-            course: session[0].courses?.title || 'Unknown Course',
-            message: 'Ready to mark attendance'
-        });
+        res.redirect(`/attendance-form.html?session=${sessionIdInt}&token=${token}`);
         
     } catch (err) {
         console.error(err);

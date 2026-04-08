@@ -1329,6 +1329,7 @@ async function viewCourseSessions(courseId) {
                 <div style="padding: 15px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px;">
                     <p><strong>Date:</strong> ${formatDate(session.date)}</p>
                     <p><strong>Status:</strong> <span style="color: ${session.status === 'active' ? '#28a745' : '#6c757d'}">${session.status}</span></p>
+                    ${session.status === 'active' ? `<button class="secondary-btn" onclick="endSpecificSession('${session.id}', '${courseId}')" style="background: #dc3545; color: white; margin-top: 10px; font-size: 12px; padding: 5px 10px;">End This Session</button>` : ''}
                     ${session.zoom_link ? `<p><strong>Zoom:</strong> <a href="${session.zoom_link}" target="_blank">Join Meeting</a></p>` : ''}
                 </div>
             `).join('');
@@ -1338,6 +1339,39 @@ async function viewCourseSessions(courseId) {
     } catch (err) {
         console.error("Error loading sessions:", err);
         document.getElementById("sessionsList").innerHTML = "<p>Error loading sessions.</p>";
+    }
+}
+
+async function endSpecificSession(sessionId, courseId) {
+    if (!confirm("Are you sure you want to end this session?")) return;
+    
+    try {
+        const res = await fetch(`${API}/attendance/sessions/${sessionId}/end`, {
+            method: "PATCH",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            alert("Session ended successfully!");
+            if (sessionId == currentSessionId) {
+                if (qrRefreshInterval) clearInterval(qrRefreshInterval);
+                if (attendanceRefreshInterval) clearInterval(attendanceRefreshInterval);
+                currentSessionId = null;
+                document.getElementById("noActiveSession").style.display = "block";
+                document.getElementById("activeSessionInfo").style.display = "none";
+            }
+            viewCourseSessions(courseId); // Refresh history list
+        } else {
+            alert(data.message || "Failed to end session");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Network error - could not end session");
     }
 }
 

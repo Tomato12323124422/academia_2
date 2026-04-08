@@ -105,7 +105,7 @@ async function onScanSuccess(decodedText, decodedResult) {
     
     // Mark attendance with token validation
     try {
-        const res = await fetch(`${API}/attendance/attendance`, {
+        const res = await fetch(`${API}/attendance/scan/mark`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
@@ -113,7 +113,8 @@ async function onScanSuccess(decodedText, decodedResult) {
             },
             body: JSON.stringify({ 
                 session_id: sessionId,
-                token: qrToken
+                token: qrToken,
+                userId: user.id
             })
         });
         

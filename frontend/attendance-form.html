@@ -280,6 +280,14 @@
             
             sessionData = data;
             document.getElementById('courseName').textContent = data.course || 'Unknown Course';
+            
+            // If user is already logged in, pre-fill and possibly auto-submit
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (user && user.full_name) {
+                document.getElementById('studentName').value = user.full_name;
+                // We could auto-submit here, but it's safer to let them click
+            }
+            
             showForm();
             
         } catch (err) {
@@ -310,7 +318,8 @@
                     session_id: sessionId,
                     token: token,
                     name: name,
-                    regNo: regNo
+                    regNo: regNo,
+                    userId: JSON.parse(localStorage.getItem("user"))?.id
                 })
             });
             

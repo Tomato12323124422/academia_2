@@ -25,7 +25,9 @@ function getServerIP() {
 }
 
 // Use Render URL for production, fallback to local for development
-const SERVER_URL = process.env.PUBLIC_URL || 'https://maseno-university-lms.onrender.com';
+// Use FRONTEND_URL for production, fallback to local IP for development
+const FRONTEND_URL = process.env.FRONTEND_URL || `http://${getServerIP()}:5000`;
+const SERVER_URL = FRONTEND_URL;
 
 
 

@@ -26,9 +26,19 @@ function getServerIP() {
 
 // Dynamic URL detection
 function getFullURL(req) {
-    // Priority: env var > X-Forwarded-Proto (Render/Proxy) > req.protocol
+    // Priority: env var > host header
+    if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL;
+    if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL;
+    
+    // Detect protocol (considering proxy)
     const protocol = req.get('x-forwarded-proto') || req.protocol;
     const host = req.get('host');
+    
+    // Handle Render/Proxy issues where req.protocol might be http but we need https
+    if (host.includes('onrender.com') || host.includes('vercel.app')) {
+        return `https://${host}`;
+    }
+    
     return `${protocol}://${host}`;
 }
 

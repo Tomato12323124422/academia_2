@@ -14,6 +14,7 @@ const quizzesRoutes = require('./routes/quizzes');
 const liveclassesRoutes = require('./routes/liveclasses');
 
 const app = express();
+app.set('trust proxy', 1); // Trust Render proxy
 
 app.use(cors());
 app.use(express.json());

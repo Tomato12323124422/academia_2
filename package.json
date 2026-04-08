@@ -8,6 +8,8 @@
     "desktop": "electron .",
     "desktop-remote": "set USE_REMOTE=true && electron .",
     "dev-desktop": "concurrently \"npm start\" \"wait-on http://localhost:5000 && electron .\"",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -28,6 +30,30 @@
     "qrcode": "^1.5.4",
     "electron": "^28.2.0",
     "concurrently": "^8.2.2",
-    "wait-on": "^7.2.0"
+    "wait-on": "^7.2.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.academia.maseno",
+    "productName": "Maseno LMS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/assets/logo.png"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/*",
+      "node_modules/@supabase/**/*",
+      "node_modules/express/**/*",
+      "node_modules/cors/**/*",
+      "node_modules/dotenv/**/*",
+      "node_modules/jsonwebtoken/**/*",
+      "node_modules/bcrypt/**/*",
+      "node_modules/qrcode/**/*",
+      "node_modules/pg/**/*"
+    ]
   }
 }
